@@ -24,9 +24,10 @@ Global Solution FIAP 2026.2 (CitizenTech), 4ES. Este repositório traz o MVP e a
 
 | Nome completo | RM |
 |---|---|
-| *(preencher)* | *(preencher)* |
-| *(preencher)* | *(preencher)* |
-| *(preencher)* | *(preencher)* |
+| Guilherme Rocha Bianchini | RM97974 |
+| Nikolas Rodrigues Moura dos Santos | RM551566 |
+| Thiago Jardim de Oliveira | RM551624 |
+| Rodrigo Brasileiro | RM98952 |
 
 ## Arquitetura
 
