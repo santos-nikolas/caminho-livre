@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Caminho Livre</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Caminho Livre</h1>
+  <p>Mapa colaborativo de barreiras de acessibilidade em calçadas e travessias — piloto no entorno da FIAP Paulista.</p>
+</header>
+<p class="aviso" role="note">Os pontos dependem de verificação humana. Itens marcados como <strong>demonstração</strong> são dados sintéticos.
+  Não informe nome, telefone, placas ou rostos.</p>
+<main>
+  <section aria-labelledby="t-mapa">
+    <h2 id="t-mapa">Mapa</h2>
+    <div id="mapa" role="application" aria-label="Mapa do território do piloto. Clique para escolher o local do relato."></div>
+    <p class="meta">Última atualização: <span id="atualizado">—</span> · versão <span id="versao">—</span></p>
+  </section>
+  <section aria-labelledby="t-form">
+    <h2 id="t-form">Registrar barreira</h2>
+    <form id="form">
+      <p>Local: <span id="local">clique no mapa ou use sua localização</span></p>
+      <button type="button" id="geo">Usar minha localização</button>
+      <label for="categoria">Categoria</label>
+      <select id="categoria" required>
+        <option value="calcada_obstruida">Calçada obstruída</option>
+        <option value="rampa_bloqueada">Rampa bloqueada ou ausente</option>
+        <option value="travessia_barreira">Travessia com barreira</option>
+      </select>
+      <label for="descricao">Descrição (opcional, até 280 caracteres)</label>
+      <textarea id="descricao" maxlength="280" rows="3"></textarea>
+      <button type="submit">Enviar relato</button>
+      <p id="msg" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+  <section aria-labelledby="t-lista">
+    <h2 id="t-lista">Relatos</h2>
+    <details>
+      <summary>Área do gestor</summary>
+      <label for="token">Token de gestor</label>
+      <input id="token" type="password" autocomplete="off">
+    </details>
+    <ul id="lista"></ul>
+  </section>
+</main>
+<footer>Mapa © <a href="https://www.openstreetmap.org/copyright">colaboradores do OpenStreetMap</a> (ODbL) · mapa base: <a href="https://www.hotosm.org/">HOT</a> / <a href="https://openstreetmap.fr/">OSM France</a>.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="app.js"></script>
+</body>
+</html>

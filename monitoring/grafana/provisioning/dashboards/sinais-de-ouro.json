@@ -1,0 +1,497 @@
+{
+ "uid": "caminho-livre-ouro",
+ "title": "Caminho Livre - 4 sinais de ouro",
+ "tags": [
+  "caminho-livre",
+  "golden-signals"
+ ],
+ "timezone": "browser",
+ "refresh": "10s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "schemaVersion": 39,
+ "panels": [
+  {
+   "id": 1,
+   "type": "stat",
+   "title": "Disponibilidade",
+   "description": "1 = no ar, 0 = fora",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 4,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "mappings": [
+      {
+       "type": "value",
+       "options": {
+        "0": {
+         "text": "FORA"
+        },
+        "1": {
+         "text": "NO AR"
+        }
+       }
+      }
+     ],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "green",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "background",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "up{job=\"caminho-livre\"}"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "type": "stat",
+   "title": "Latência p95",
+   "description": "Sinal de ouro 1",
+   "gridPos": {
+    "x": 4,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "mappings": [],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 0.5
+       },
+       {
+        "color": "red",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "background",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"caminho-livre\"}[5m])))"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "type": "stat",
+   "title": "Tráfego",
+   "description": "Sinal de ouro 2",
+   "gridPos": {
+    "x": 9,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps",
+     "mappings": [],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "background",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(rate(http_requests_total{job=\"caminho-livre\"}[1m]))"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "type": "stat",
+   "title": "Taxa de erros 5xx",
+   "description": "Sinal de ouro 3",
+   "gridPos": {
+    "x": 14,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "mappings": [],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 0.01
+       },
+       {
+        "color": "red",
+        "value": 0.05
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "background",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(rate(http_requests_total{job=\"caminho-livre\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_requests_total{job=\"caminho-livre\"}[5m])), 1e-9)"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "type": "stat",
+   "title": "Memória (saturação)",
+   "description": "Sinal de ouro 4 - limite do container 256 MB",
+   "gridPos": {
+    "x": 19,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "mappings": [],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 150000000.0
+       },
+       {
+        "color": "red",
+        "value": 200000000.0
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "colorMode": "background",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "process_resident_memory_bytes{job=\"caminho-livre\"}"
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "type": "timeseries",
+   "title": "1. Latência (p50 / p95 / p99)",
+   "description": "Tempo de resposta da API medido no servidor",
+   "gridPos": {
+    "x": 0,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"caminho-livre\"}[5m])))",
+     "legendFormat": "p50"
+    },
+    {
+     "refId": "B",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"caminho-livre\"}[5m])))",
+     "legendFormat": "p95"
+    },
+    {
+     "refId": "C",
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"caminho-livre\"}[5m])))",
+     "legendFormat": "p99"
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "type": "timeseries",
+   "title": "2. Tráfego (req/s por rota)",
+   "description": "Requisições por segundo",
+   "gridPos": {
+    "x": 12,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (route) (rate(http_requests_total{job=\"caminho-livre\"}[1m]))",
+     "legendFormat": "{{route}}"
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "type": "timeseries",
+   "title": "3. Erros (req/s por status)",
+   "description": "4xx = erro do cliente (validação/autorização), 5xx = falha do servidor (gera alerta)",
+   "gridPos": {
+    "x": 0,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (status) (rate(http_requests_total{job=\"caminho-livre\",status=~\"[45]..\"}[1m]))",
+     "legendFormat": "{{status}}"
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "type": "timeseries",
+   "title": "4. Saturação (CPU, requisições em andamento)",
+   "description": "Uso de CPU do processo e fila de requisições",
+   "gridPos": {
+    "x": 12,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 10
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(process_cpu_seconds_total{job=\"caminho-livre\"}[1m])",
+     "legendFormat": "CPU (núcleos)"
+    },
+    {
+     "refId": "B",
+     "expr": "http_requests_in_progress{job=\"caminho-livre\"}",
+     "legendFormat": "em andamento"
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "type": "alertlist",
+   "title": "Alertas",
+   "gridPos": {
+    "x": 0,
+    "y": 20,
+    "w": 24,
+    "h": 6
+   },
+   "options": {
+    "viewMode": "list",
+    "groupMode": "default",
+    "showInstances": true,
+    "maxItems": 20,
+    "sortOrder": 1,
+    "stateFilter": {
+     "firing": true,
+     "pending": true,
+     "normal": true,
+     "error": true,
+     "noData": true
+    },
+    "datasource": "Prometheus",
+    "alertInstanceLabelFilter": ""
+   }
+  }
+ ]
+}

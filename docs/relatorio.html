@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Caminho Livre - Deploy Blindado</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm; }
+  :root { --fg:#1b1f24; --muted:#59636e; --line:#d0d7de; --accent:#0b5cad; --soft:#f3f6fa; --warn:#fff3cd; }
+  body { font: 10.5pt/1.5 "Segoe UI", system-ui, sans-serif; color: var(--fg); margin: 0; }
+  h1 { font-size: 24pt; margin: 0 0 4px; color: var(--accent); }
+  h2 { font-size: 15pt; border-bottom: 2px solid var(--accent); padding-bottom: 3px; margin: 22px 0 8px; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; break-after: avoid; }
+  p, li { margin: 4px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.5pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  td.n { text-align: right; white-space: nowrap; }
+  code { font: 9pt Consolas, monospace; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  pre { font: 8.5pt/1.4 Consolas, monospace; background: var(--soft); padding: 8px; border-radius: 4px; white-space: pre-wrap; break-inside: avoid; }
+  a { color: var(--accent); }
+  .capa { border-left: 6px solid var(--accent); padding: 4px 0 4px 14px; margin-bottom: 14px; }
+  .sub { color: var(--muted); font-size: 11.5pt; margin: 0; }
+  .pendente { background: var(--warn); padding: 0 4px; border-radius: 3px; }
+  figure { margin: 8px 0 12px; break-inside: avoid; }
+  figure img { max-width: 100%; max-height: 105mm; border: 1px solid var(--line); display: block; margin: 0 auto; }
+  figcaption { font-size: 9pt; color: var(--muted); text-align: center; margin-top: 3px; }
+  .falta { border: 2px dashed #c9a400; background: var(--warn); padding: 14px; text-align: center; font-size: 9.5pt; }
+  .quebra { break-before: page; }
+  .ok { color: #1a7f37; font-weight: 600; }
+  svg text { font-family: "Segoe UI", sans-serif; }
+</style>
+</head>
+<body>
+
+<div class="capa">
+  <p class="sub">FIAP · Global Solution 2026.2 · CitizenTech · Engenharia de Software 4ES</p>
+  <h1>Caminho Livre: Deploy Blindado</h1>
+  <p class="sub">Secure DevOps Tools &amp; Cloud Computing · Prof. Gabriel Henrique Boyczuk Arcanjo</p>
+</div>
+
+<table>
+  <tr><th>Integrante (nome completo)</th><th>RM</th></tr>
+  <tr><td><span class="pendente">preencher</span></td><td><span class="pendente">preencher</span></td></tr>
+  <tr><td><span class="pendente">preencher</span></td><td><span class="pendente">preencher</span></td></tr>
+  <tr><td><span class="pendente">preencher</span></td><td><span class="pendente">preencher</span></td></tr>
+  <tr><td><span class="pendente">preencher</span></td><td><span class="pendente">preencher</span></td></tr>
+  <tr><td><span class="pendente">preencher</span></td><td><span class="pendente">preencher</span></td></tr>
+</table>
+
+<table>
+  <tr><th style="width:28%">Link</th><th>Endereço</th></tr>
+  <tr><td>MVP publicado (URL pública)</td><td><a class="pendente" href="https://caminholivre-gs.brazilsouth.cloudapp.azure.com">https://caminholivre-gs.brazilsouth.cloudapp.azure.com</a> (confirmar com <code>terraform output app_url</code>)</td></tr>
+  <tr><td>Repositório público</td><td><a class="pendente" href="https://github.com/OWNER/caminho-livre">https://github.com/OWNER/caminho-livre</a></td></tr>
+  <tr><td>Pipeline (GitHub Actions)</td><td><a class="pendente" href="https://github.com/OWNER/caminho-livre/actions">https://github.com/OWNER/caminho-livre/actions</a></td></tr>
+</table>
+
+<h2>1. Ficha Técnica do MVP</h2>
+<table>
+  <tr><th style="width:24%">Nome do produto</th><td>Caminho Livre</td></tr>
+  <tr><th>Cidadão e território</th><td>Pedestres com deficiência ou mobilidade reduzida, idosos e cuidadores. O piloto cobre o entorno do campus FIAP Paulista (São Paulo, SP).</td></tr>
+  <tr><th>Problema, em uma frase</th><td>Rampas bloqueadas, calçadas obstruídas e travessias com barreira são relatadas de forma dispersa e ninguém acompanha se foram resolvidas.</td></tr>
+  <tr><th>Proposta de valor</th><td>O cidadão registra a barreira no mapa e acompanha o status. O gestor do local recebe uma fila auditável para revisar e encerrar cada relato.</td></tr>
+  <tr><th>Arquitetura: componentes</th><td>Página web (HTML + Leaflet), API FastAPI, PostgreSQL e Caddy (HTTPS) em Docker Compose, numa VM Azure criada por Terraform. CI/CD com GitHub Actions. Prometheus, Grafana e Alertmanager.</td></tr>
+  <tr><th>Fontes de dados</th><td>OpenStreetMap (mapa base e malha viária) e relatos do próprio MVP. Os pontos de demonstração são sintéticos e vêm identificados na tela.</td></tr>
+  <tr><th>Modelos de IA utilizados</th><td>Detector de obstáculos customizado (YOLO), do componente Applied Computer Vision. Fica fora do escopo desta entrega.</td></tr>
+  <tr><th>URL do MVP e repositório</th><td>Ver tabela de links acima.</td></tr>
+  <tr><th>Indicadores de impacto</th><td>Relatos recebidos e revisados, tempo até a primeira revisão e taxa de resolução confirmada. São indicadores de processo, não prova de melhoria física.</td></tr>
+  <tr><th>ODS conectados</th><td>ODS 10 (redução das desigualdades) e ODS 11 (cidades e comunidades sustentáveis).</td></tr>
+</table>
+
+<h2>2. Arquitetura</h2>
+<svg viewBox="0 0 900 440" width="100%" role="img" aria-label="Diagrama da arquitetura">
+  <defs>
+    <marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
+  </defs>
+  <g font-size="12" fill="#1b1f24">
+    <!-- coluna esquerda: CI/CD -->
+    <rect x="10" y="20" width="200" height="44" rx="6" fill="#fff" stroke="#59636e"/>
+    <text x="110" y="47" text-anchor="middle">Desenvolvedor · git push</text>
+    <rect x="10" y="94" width="200" height="200" rx="6" fill="#eef4fb" stroke="#0b5cad"/>
+    <text x="110" y="116" text-anchor="middle" font-weight="700">GitHub Actions</text>
+    <text x="24" y="142">✓ build + pytest (Postgres)</text>
+    <text x="24" y="164">✓ Gitleaks (histórico)</text>
+    <text x="24" y="186">✓ Semgrep (SAST)</text>
+    <text x="24" y="208">✓ Terraform test + Trivy IaC</text>
+    <text x="24" y="230">✓ Trivy imagem</text>
+    <text x="24" y="252">→ publica imagem aprovada</text>
+    <text x="24" y="274">→ job deploy verifica versão</text>
+    <rect x="10" y="330" width="200" height="50" rx="6" fill="#fff" stroke="#59636e"/>
+    <text x="110" y="351" text-anchor="middle">GHCR</text>
+    <text x="110" y="368" text-anchor="middle" font-size="10.5">imagem :sha e :latest</text>
+    <!-- nuvem -->
+    <rect x="250" y="10" width="440" height="420" rx="10" fill="#f6f8fa" stroke="#0b5cad" stroke-dasharray="6 4"/>
+    <text x="268" y="32" font-weight="700" fill="#0b5cad">Azure · brazilsouth · criado por Terraform</text>
+    <rect x="270" y="46" width="400" height="40" rx="5" fill="#fff4d6" stroke="#c9a400"/>
+    <text x="470" y="64" text-anchor="middle" font-size="11">NSG: 80/443 da Internet · 22 só do admin_cidr (/32)</text>
+    <text x="470" y="79" text-anchor="middle" font-size="11">regra final: negar todo o resto</text>
+    <rect x="270" y="100" width="400" height="240" rx="6" fill="#fff" stroke="#59636e"/>
+    <text x="284" y="120" font-weight="700">VM Ubuntu 24.04 · B1s · Docker Compose</text>
+    <rect x="288" y="138" width="105" height="56" rx="5" fill="#eef4fb" stroke="#0b5cad"/>
+    <text x="340" y="161" text-anchor="middle">Caddy</text>
+    <text x="340" y="178" text-anchor="middle" font-size="10.5">HTTPS automático</text>
+    <rect x="418" y="138" width="110" height="56" rx="5" fill="#eef4fb" stroke="#0b5cad"/>
+    <text x="473" y="161" text-anchor="middle">API FastAPI</text>
+    <text x="473" y="178" text-anchor="middle" font-size="10.5">uid 10001, read-only</text>
+    <rect x="553" y="138" width="104" height="56" rx="5" fill="#eef4fb" stroke="#0b5cad"/>
+    <text x="605" y="161" text-anchor="middle">PostgreSQL</text>
+    <text x="605" y="178" text-anchor="middle" font-size="10.5">sem porta pública</text>
+    <rect x="288" y="232" width="240" height="50" rx="5" fill="#fff" stroke="#59636e"/>
+    <text x="408" y="253" text-anchor="middle">systemd timer (60 s)</text>
+    <text x="408" y="270" text-anchor="middle" font-size="10.5">docker compose pull + up -d</text>
+    <rect x="553" y="232" width="104" height="50" rx="5" fill="#fff" stroke="#59636e"/>
+    <text x="605" y="253" text-anchor="middle">.env 0600</text>
+    <text x="605" y="270" text-anchor="middle" font-size="10.5">segredos gerados</text>
+    <text x="284" y="318" font-size="10.5" fill="#59636e">Disco SSD gerenciado (criptografado em repouso pela Azure) · volume pgdata</text>
+    <rect x="270" y="360" width="400" height="50" rx="5" fill="#fff" stroke="#59636e"/>
+    <text x="470" y="381" text-anchor="middle">Azure Storage: terraform.tfstate</text>
+    <text x="470" y="398" text-anchor="middle" font-size="10.5">versionado, TLS 1.2, sem acesso público (fora do repositório)</text>
+    <!-- coluna direita -->
+    <rect x="730" y="40" width="160" height="50" rx="6" fill="#fff" stroke="#59636e"/>
+    <text x="810" y="61" text-anchor="middle">Cidadão / gestor</text>
+    <text x="810" y="78" text-anchor="middle" font-size="10.5">navegador</text>
+    <rect x="730" y="120" width="160" height="44" rx="6" fill="#fff" stroke="#59636e"/>
+    <text x="810" y="147" text-anchor="middle">Admin (IP /32)</text>
+    <rect x="730" y="200" width="160" height="90" rx="6" fill="#eef4fb" stroke="#0b5cad"/>
+    <text x="810" y="222" text-anchor="middle" font-weight="700">Monitoramento</text>
+    <text x="810" y="242" text-anchor="middle" font-size="11">Prometheus</text>
+    <text x="810" y="260" text-anchor="middle" font-size="11">Grafana · Alertmanager</text>
+    <text x="810" y="278" text-anchor="middle" font-size="10.5">(local)</text>
+    <rect x="730" y="330" width="160" height="44" rx="6" fill="#fff" stroke="#59636e"/>
+    <text x="810" y="357" text-anchor="middle">Discord (alerta)</text>
+  </g>
+  <g stroke="#444" stroke-width="1.5" fill="none">
+    <path d="M110 64 V94" marker-end="url(#s)"/>
+    <path d="M110 294 V330" marker-end="url(#s)"/>
+    <path d="M210 355 H240 V257 H288" stroke-dasharray="5 4" marker-end="url(#s)"/>
+    <path d="M393 166 H418" marker-end="url(#s)"/>
+    <path d="M528 166 H553" marker-end="url(#s)"/>
+    <path d="M408 232 V194" stroke-dasharray="5 4" marker-end="url(#s)"/>
+    <path d="M730 65 H700 V130 H365 V138" marker-end="url(#s)"/>
+    <path d="M730 142 H690 V120" marker-end="url(#s)"/>
+    <path d="M730 245 H710 V212 H340 V194" stroke-dasharray="5 4" marker-end="url(#s)"/>
+    <path d="M810 290 V330" marker-end="url(#s)"/>
+    <path d="M210 270 H230 V128 H340 V138" stroke-dasharray="2 3" marker-end="url(#s)"/>
+  </g>
+  <g font-size="10" fill="#59636e">
+    <text x="218" y="348">pull</text>
+    <text x="704" y="58">HTTPS 443</text>
+    <text x="694" y="136">SSH 22</text>
+    <text x="600" y="224">/metrics + token</text>
+    <text x="236" y="122">/health</text>
+  </g>
+</svg>
+<p><strong>Fluxo:</strong> cada <code>git push</code> passa por 5 portões (testes, Gitleaks, Semgrep, Trivy IaC e Trivy imagem). Só a imagem aprovada na <code>main</code> recebe a tag <code>latest</code> no GHCR. Na VM, um <code>systemd timer</code> aplica a imagem nova em até 60 s (deploy <em>pull-based</em>), e o job <code>deploy</code> do pipeline só passa quando <code>/health</code> responde com o SHA do commit. O CI não guarda credencial da Azure e o SSH não fica aberto para a internet.</p>
+<p><strong>Por que VM (IaaS) e não PaaS:</strong> o custo é previsível e cabe no free tier de estudante. A stack é a mesma que roda local (<code>docker-compose.yml</code>) e o Terraform descreve toda a rede. O preço disso é que patches do SO, backup e disponibilidade ficam com a equipe (seção 7).</p>
+
+<h2 class="quebra">3. Container e Infraestrutura como Código (5,0)</h2>
+<h3>3.1 Dockerfile enxuto, não-root, sem segredo e stack em docker compose</h3>
+<table>
+  <tr><th>Requisito</th><th>Como foi atendido</th><th>Arquivo</th></tr>
+  <tr><td>Enxuto</td><td>Multi-stage: o <code>pip</code> roda no estágio de build e só os pacotes instalados vão para a imagem <code>python:3.12-slim</code>. <code>.dockerignore</code> exclui testes e cache.</td><td><code>app/Dockerfile</code></td></tr>
+  <tr><td>Usuário não-root</td><td><code>USER 10001</code>. No compose: <code>read_only</code>, <code>cap_drop: ALL</code>, <code>no-new-privileges</code>, <code>mem_limit 256m</code>.</td><td><code>docker-compose.yml</code></td></tr>
+  <tr><td>Sem segredo na imagem</td><td>Os segredos só entram por variável de ambiente em runtime. O Trivy roda com <code>--scanners secret</code> na imagem a cada push.</td><td>workflow</td></tr>
+  <tr><td>Patches do SO na imagem</td><td><code>apt-get upgrade</code> no estágio final. Foi uma correção exigida pelo Trivy (seção 4.3).</td><td><code>app/Dockerfile</code></td></tr>
+  <tr><td>Stack com docker compose</td><td><code>db</code> (Postgres sem porta publicada) + <code>api</code> + <code>proxy</code> (Caddy). O mesmo arquivo roda local e na VM, e o override local só acrescenta o <code>build</code>.</td><td><code>docker-compose.yml</code></td></tr>
+</table>
+<figure><img src="evidencias/01-compose-ps.png" alt="docker compose ps"><figcaption>Figura 1: <code>docker compose ps</code> com os 3 serviços saudáveis e <code>docker compose exec api id</code> mostrando uid 10001 (não-root).</figcaption></figure>
+
+<h3>3.2 Terraform: state e .tfvars fora do repositório, porta admin nunca em 0.0.0.0/0</h3>
+<table>
+  <tr><th>Requisito</th><th>Como foi atendido</th></tr>
+  <tr><td>Nuvem criada por código</td><td><code>infra/terraform/main.tf</code>: resource group, VNet/subnet, NSG, IP público com DNS, NIC e VM Ubuntu 24.04. A VM é provisionada por cloud-init: Docker, stack, <code>.env</code> 0600, swap, timer de deploy e <code>unattended-upgrades</code>.</td></tr>
+  <tr><td>State fora do repositório</td><td>Backend <code>azurerm</code> num Storage Account com versionamento, TLS 1.2 e sem acesso público, criado por <code>infra/bootstrap/criar-state.sh</code>. O <code>backend.hcl</code>, o <code>*.tfstate</code> e o <code>*.tfvars</code> estão no <code>.gitignore</code>; o repositório só tem os <code>*.example</code>.</td></tr>
+  <tr><td>Porta admin nunca 0.0.0.0/0</td><td>A regra SSH usa <code>var.admin_cidr</code>, e a <em>validation</em> só aceita prefixos de /24 a /32 (0.0.0.0/0 é recusado no <code>plan</code>). O <code>terraform test</code> prova os dois bloqueios no CI, com providers simulados. Os únicos acessos públicos são 80/443, e a última regra nega todo o resto.</td></tr>
+  <tr><td>Sem senha digitada</td><td>Senha do Postgres, token admin e token de métricas vêm de <code>random_password</code>. O SSH aceita só chave; login por senha está desabilitado.</td></tr>
+</table>
+<pre>$ terraform test
+  run "bloqueia_ssh_aberto_para_a_internet"... pass
+  run "bloqueia_faixa_larga_no_ssh"... pass
+  run "infra_segura_com_ip_do_admin"... pass
+Success! 3 passed, 0 failed.</pre>
+<figure><img src="evidencias/02-terraform-apply.png" alt="terraform apply"><figcaption>Figura 2: <code>terraform apply</code> concluído com os outputs (<code>app_url</code>, <code>public_ip</code>).</figcaption></figure>
+<figure><img src="evidencias/03-nsg-portal.png" alt="regras do NSG"><figcaption>Figura 3: regras de entrada do NSG no portal Azure. SSH só aceita o IP /32 do administrador.</figcaption></figure>
+<figure><img src="evidencias/04-tfstate-storage.png" alt="state remoto"><figcaption>Figura 4: <code>caminho-livre.tfstate</code> no container <code>tfstate</code> do Storage Account (fora do Git).</figcaption></figure>
+
+<h2 class="quebra">4. Pipeline DevSecOps (4,0)</h2>
+<p>Arquivo: <code>.github/workflows/devsecops.yml</code>. Roda em <strong>todo push</strong>, em qualquer branch.</p>
+<table>
+  <tr><th>Job</th><th>Ferramenta</th><th>Bloqueia quando</th></tr>
+  <tr><td>Build e testes</td><td>pytest + Postgres 16 (service)</td><td>qualquer teste falha (fluxo cidadão/gestor, validação de território, 401 sem token, LGPD)</td></tr>
+  <tr><td>Gitleaks</td><td>Gitleaks 8.28 (histórico completo)</td><td>algum segredo aparece em qualquer commit</td></tr>
+  <tr><td>Semgrep</td><td>p/default, p/python, p/dockerfile, p/secrets</td><td>algum achado aparece (<code>--error</code>)</td></tr>
+  <tr><td>Terraform + Trivy IaC</td><td>fmt, validate, test + <code>trivy config</code></td><td>formatação, validação, teste de segurança ou misconfiguração HIGH/CRITICAL</td></tr>
+  <tr><td>Imagem + Trivy</td><td><code>trivy image --scanners vuln,secret</code></td><td>há CVE HIGH/CRITICAL com correção ou segredo na imagem</td></tr>
+  <tr><td>Deploy automático</td><td>job com environment <code>producao</code></td><td>o SHA não entra no ar em 5 min, ou <code>/metrics</code> responde sem token</td></tr>
+</table>
+<p><strong>Segredos no GitHub Secrets:</strong> <code>METRICS_TOKEN</code> é usado no smoke test autenticado. O push para o GHCR usa o <code>GITHUB_TOKEN</code> efêmero, com permissão <code>packages: write</code> só no job de imagem; o padrão do workflow é <code>contents: read</code>. Nenhuma credencial da Azure fica no CI.</p>
+<figure><img src="evidencias/05-github-secrets.png" alt="GitHub Secrets"><figcaption>Figura 5: Settings → Secrets and variables → Actions (<code>METRICS_TOKEN</code> e a variável <code>APP_URL</code>).</figcaption></figure>
+<figure><img src="evidencias/06-pipeline-verde.png" alt="pipeline verde"><figcaption>Figura 6: execução completa na <code>main</code> com todos os jobs verdes, incluindo o deploy.</figcaption></figure>
+<figure><img src="evidencias/07-deploy-log.png" alt="log do deploy"><figcaption>Figura 7: log do job <em>Deploy automático</em> confirmando a nova versão (SHA) no ar.</figcaption></figure>
+
+<h3>4.3 Execução barrada e corrigida</h3>
+<p><strong>Caso real no desenvolvimento:</strong> na primeira varredura da imagem, o Trivy barrou o build com 2 vulnerabilidades HIGH no pacote <code>zlib1g</code> da imagem base Debian 13 (CVE-2026-85091, <em>heap buffer overflow</em>), já corrigidas na versão <code>1:1.3.dfsg+really1.3.1-1+deb13u1</code>. A correção foi aplicar os patches do SO no Dockerfile (<code>apt-get upgrade</code>). Com isso a varredura passou a mostrar 0 HIGH/CRITICAL.</p>
+<p><strong>Demonstração no GitHub Actions:</strong> numa branch descartável foi commitado um segredo falso (<code>DATABASE_PASSWORD = "..."</code>) e o Gitleaks barrou o pipeline. A correção foi remover o segredo <em>do histórico</em> (<code>git reset</code> + <code>push --force</code>), não só apagar o arquivo, porque o Gitleaks varre todos os commits. Num caso real, o segredo também seria rotacionado.</p>
+<figure><img src="evidencias/08-pipeline-barrado.png" alt="execução barrada"><figcaption>Figura 8: execução barrada pelo Gitleaks (segredo falso detectado).</figcaption></figure>
+<figure><img src="evidencias/09-pipeline-corrigido.png" alt="execução corrigida"><figcaption>Figura 9: mesma branch, execução corrigida com todos os portões verdes.</figcaption></figure>
+
+<h2 class="quebra">5. Observabilidade (3,0)</h2>
+<p>A API expõe <code>/metrics</code> (Prometheus) protegido por token Bearer. Prometheus, Grafana e Alertmanager rodam localmente e raspam o MVP publicado via HTTPS, como o enunciado permite. Os rótulos de rota usam o <em>template</em> (<code>/api/admin/reports/{relato_id}</code>), o que evita cardinalidade alta e IDs nas métricas.</p>
+<table>
+  <tr><th>Sinal de ouro</th><th>Métrica / PromQL</th></tr>
+  <tr><td>Latência</td><td><code>histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))</code> (p50/p95/p99)</td></tr>
+  <tr><td>Tráfego</td><td><code>sum by (route) (rate(http_requests_total[1m]))</code></td></tr>
+  <tr><td>Erros</td><td><code>sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))</code></td></tr>
+  <tr><td>Saturação</td><td><code>process_resident_memory_bytes</code> (limite de 256 MB), <code>rate(process_cpu_seconds_total[1m])</code>, <code>http_requests_in_progress</code></td></tr>
+</table>
+<table>
+  <tr><th>Alerta</th><th>Condição</th><th>Severidade</th></tr>
+  <tr><td>CaminhoLivreFora</td><td><code>up == 0</code> por 1 min</td><td>critical</td></tr>
+  <tr><td>TaxaDeErrosAlta</td><td>&gt; 5% de respostas 5xx por 1 min</td><td>critical</td></tr>
+  <tr><td>LatenciaP95Alta</td><td>p95 &gt; 1 s por 5 min</td><td>warning</td></tr>
+  <tr><td>SaturacaoMemoria</td><td>&gt; 200 MB por 5 min</td><td>warning</td></tr>
+</table>
+<p><strong>Como o alerta foi disparado:</strong> com o banco parado na VM (<code>docker compose stop db</code>) e o site em uso, a API passou a responder 500 e o <code>TaxaDeErrosAlta</code> foi para <em>firing</em>. O Alertmanager enviou a notificação ao Discord. Com <code>docker compose start db</code>, o alerta foi resolvido e a notificação de <em>resolved</em> também foi enviada. É uma falha real de dependência, sem nenhum endpoint de "erro proposital" exposto em produção.</p>
+<figure><img src="evidencias/10-grafana-sinais-de-ouro.png" alt="dashboard"><figcaption>Figura 10: dashboard <em>Caminho Livre - 4 sinais de ouro</em> no Grafana, alimentado pelo MVP publicado.</figcaption></figure>
+<figure><img src="evidencias/11-alerta-disparado.png" alt="alerta disparado"><figcaption>Figura 11: alerta <code>TaxaDeErrosAlta</code> em <em>firing</em> no Prometheus/Alertmanager e a mensagem recebida no Discord.</figcaption></figure>
+
+<h2 class="quebra">6. MVP publicado</h2>
+<figure><img src="evidencias/12-mvp-url-publica.png" alt="MVP"><figcaption>Figura 12: MVP aberto na URL pública (HTTPS, janela anônima), com mapa, formulário e lista de relatos.</figcaption></figure>
+
+<h2>7. Responsabilidade compartilhada (modelo IaaS)</h2>
+<table>
+  <tr><th style="width:22%">Camada</th><th>Microsoft Azure</th><th>Equipe Caminho Livre</th></tr>
+  <tr><td>Física e virtualização</td><td>Datacenter, hardware, rede física, hipervisor, isolamento entre clientes</td><td>—</td></tr>
+  <tr><td>Rede</td><td>Infraestrutura da VNet, mecanismo do NSG, IP público</td><td>Regras do NSG (Terraform): só 80/443 públicos, SSH só do admin, negar o resto</td></tr>
+  <tr><td>Armazenamento</td><td>Durabilidade do disco gerenciado e criptografia em repouso (chaves da plataforma)</td><td>Backup lógico do Postgres (<span class="pendente">pendente, ver riscos</span>), proteção do Storage do tfstate</td></tr>
+  <tr><td>Sistema operacional</td><td>Imagem Ubuntu publicada pela Canonical no marketplace</td><td>Patches (<code>unattended-upgrades</code>), hardening, chave SSH sem senha</td></tr>
+  <tr><td>Containers e dependências</td><td>—</td><td>Imagem base atualizada, CVEs (Trivy), usuário não-root, capabilities</td></tr>
+  <tr><td>Aplicação</td><td>—</td><td>Código (testes, Semgrep), autenticação do gestor, CSP, validação de entrada</td></tr>
+  <tr><td>Identidade e segredos</td><td>Entra ID / RBAC da assinatura</td><td>Segredos gerados pelo Terraform, <code>.env</code> 0600, GitHub Secrets, rotação</td></tr>
+  <tr><td>Dados e LGPD</td><td>Região escolhida (brazilsouth) e certificações da plataforma</td><td>Minimização, sanitização, retenção e resposta a titulares (controladora)</td></tr>
+  <tr><td>Monitoramento</td><td>Saúde do host físico</td><td>Métricas da aplicação, alertas e resposta a incidente</td></tr>
+</table>
+
+<h2>8. LGPD: onde ficam os dados pessoais</h2>
+<table>
+  <tr><th>Dado</th><th>É pessoal?</th><th>Onde fica</th><th>Proteção</th></tr>
+  <tr><td>Conta de cidadão</td><td>—</td><td>Não existe</td><td>Minimização: o piloto não tem cadastro</td></tr>
+  <tr><td>Coordenada do relato</td><td>Pode indicar onde a pessoa estava</td><td>Postgres (volume <code>pgdata</code>) na VM, disco em brazilsouth</td><td>Arredondada para 4 casas (~11 m) antes de gravar</td></tr>
+  <tr><td>Descrição livre</td><td>Pode conter contatos</td><td>Postgres (<code>descricao_sanitizada</code>)</td><td>E-mail, telefone e CPF trocados por <code>[removido]</code> antes de gravar (testado)</td></tr>
+  <tr><td>Endereço IP do visitante</td><td>Sim</td><td>Não é armazenado</td><td>Caddy sem access log, API sem log de corpo, métricas sem IP</td></tr>
+  <tr><td>Fotos</td><td>Podem ter rostos/placas</td><td>Não são armazenadas neste MVP</td><td>O módulo de Visão processa sob demanda (fora desta entrega)</td></tr>
+  <tr><td>Segredos (tokens, senha do banco)</td><td>Não pessoais, mas sensíveis</td><td><code>.env</code> 0600 na VM, tfstate remoto, GitHub Secrets</td><td>Nunca no Git (Gitleaks); o tfstate tem acesso restrito à assinatura</td></tr>
+</table>
+<p>Em trânsito, tudo passa por HTTPS (certificado Let's Encrypt emitido pelo Caddy). Em repouso, o disco gerenciado da Azure é criptografado pela plataforma. Os dados ficam no Brasil (região <code>brazilsouth</code>).</p>
+
+<h2>9. Estimativa de custo</h2>
+<p>Fonte: Azure Retail Prices API (preços públicos pay-as-you-go em USD, região <code>brazilsouth</code>), consultada em 11/11/2026. O mês considerado tem 730 h.</p>
+<table>
+  <tr><th>Recurso</th><th>Preço unitário</th><th class="n">USD/mês</th></tr>
+  <tr><td>VM Standard_B1s (Linux)</td><td>US$ 0,0168/h</td><td class="n">12,26</td></tr>
+  <tr><td>IP público IPv4 Standard estático</td><td>US$ 0,005/h</td><td class="n">3,65</td></tr>
+  <tr><td>Disco do SO Standard SSD E4 (32 GB)</td><td>US$ 4,48/mês</td><td class="n">4,48</td></tr>
+  <tr><td>Storage do tfstate (poucos KB)</td><td>—</td><td class="n">&lt; 0,01</td></tr>
+  <tr><td>Saída de dados (primeiros 100 GB/mês gratuitos)</td><td>—</td><td class="n">0,00</td></tr>
+  <tr><td>GitHub Actions e GHCR (repositório público)</td><td>—</td><td class="n">0,00</td></tr>
+  <tr><td>Prometheus/Grafana/Alertmanager (local)</td><td>—</td><td class="n">0,00</td></tr>
+  <tr><th colspan="2">Total sem benefícios</th><th class="n">≈ 20,40</th></tr>
+  <tr><td colspan="2">Com o benefício de 750 h/mês de B1s das contas Azure gratuitas/estudante (12 meses, confirmar na assinatura)</td><td class="n">≈ 8,14</td></tr>
+</table>
+<p>Para comparação, a mesma VM em <code>eastus</code> custa US$ 0,0104/h (≈ US$ 7,59/mês). Mesmo assim a escolha foi <code>brazilsouth</code>, para manter os dados no Brasil e a latência baixa para o cidadão de São Paulo. Para escalar, os próximos passos seriam uma VM B2s e um PostgreSQL gerenciado com backup automático. Esses itens não foram orçados aqui.</p>
+
+<h2>10. Riscos conhecidos e próximos passos</h2>
+<ul>
+  <li><strong>Backup do banco:</strong> ainda não automatizado. Próximo passo: <code>pg_dump</code> diário para um Storage Account com retenção, ou migrar para o Azure Database for PostgreSQL.</li>
+  <li><strong>Ponto único de falha:</strong> uma VM só. Aceitável no piloto; o monitoramento avisa (<code>CaminhoLivreFora</code>) quando ela cai.</li>
+  <li><strong>Monitoramento local:</strong> só alerta enquanto a máquina da equipe está ligada. Próximo passo: Azure Monitor ou Grafana Cloud.</li>
+  <li><strong>Rate limiting:</strong> o POST de relatos ainda não tem limite por IP. Próximo passo: <code>rate_limit</code> no Caddy.</li>
+</ul>
+
+<h2>11. Checklist da rubrica</h2>
+<table>
+  <tr><th>Critério</th><th>Pts</th><th>Evidência</th></tr>
+  <tr><td>Dockerfile enxuto, não-root, sem segredo e docker compose</td><td>2,0</td><td>Seção 3.1, Fig. 1, <code>app/Dockerfile</code>, <code>docker-compose.yml</code></td></tr>
+  <tr><td>Terraform, state/.tfvars fora do repo, admin nunca 0.0.0.0/0</td><td>3,0</td><td>Seção 3.2, <code>terraform test</code>, Figs. 2–4, <code>.gitignore</code></td></tr>
+  <tr><td>Actions: build, Gitleaks, Semgrep, Trivy por push; Secrets; deploy automático; barrada e corrigida</td><td>4,0</td><td>Seção 4, Figs. 5–9</td></tr>
+  <tr><td>Dashboard com os 4 sinais de ouro e um alerta disparado</td><td>3,0</td><td>Seção 5, Figs. 10–11</td></tr>
+  <tr><td>Arquitetura, responsabilidade compartilhada, LGPD, custo, README</td><td>2,0</td><td>Seções 2, 7, 8 e 9; README com Ficha Técnica</td></tr>
+</table>
+
+<h2>12. Conclusão</h2>
+<p>O Caminho Livre chega ao cidadão por um caminho em que nenhum passo é manual. A infraestrutura é descrita em Terraform e testada antes de existir. Cada alteração de código passa por testes e por quatro varreduras de segurança, e só a imagem aprovada é publicada e aplicada automaticamente. Depois de publicado, o produto é observado pelos quatro sinais de ouro, com alertas que já foram disparados por uma falha real. Os riscos que ainda existem, principalmente backup e redundância, estão listados com o próximo passo de cada um.</p>
+
+<script>
+  document.querySelectorAll("figure img").forEach(function (img) {
+    img.addEventListener("error", function () {
+      var d = document.createElement("div");
+      d.className = "falta";
+      d.textContent = "PRINT PENDENTE: salve a captura como docs/" + img.getAttribute("src") + " e gere o PDF de novo";
+      img.replaceWith(d);
+    });
+  });
+</script>
+</body>
+</html>

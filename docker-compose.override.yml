@@ -1,0 +1,8 @@
+# Carregado automaticamente so no ambiente local: constroi a imagem a partir do codigo.
+services:
+  api:
+    build:
+      context: ./app
+      args:
+        GIT_SHA: local
+    image: caminho-livre-api:local

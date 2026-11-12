@@ -1,0 +1,148 @@
+# Pipeline DevSecOps do Caminho Livre: nada chega ao cidadao sem passar pelos portoes de seguranca.
+# push (qualquer branch): testes + build + Gitleaks + Semgrep + Trivy (IaC e imagem)
+# push na main: publica a imagem aprovada no GHCR e confirma o deploy automatico na VM.
+name: DevSecOps
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devsecops-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TRIVY_IMAGE: aquasec/trivy:0.67.2
+  GITLEAKS_VERSION: 8.28.0
+
+jobs:
+  testes:
+    name: Build e testes
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: caminholivre
+          POSTGRES_USER: caminholivre
+          POSTGRES_PASSWORD: somente-ci
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U caminholivre" --health-interval 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: app/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+        env:
+          DATABASE_URL: postgresql://caminholivre:somente-ci@localhost:5432/caminholivre
+
+  gitleaks:
+    name: Gitleaks (segredos no historico)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0 # historico completo: segredo apagado em commit novo continua vazado
+      - name: Instalar Gitleaks
+        run: curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+      - name: Varredura
+        run: ./gitleaks git --no-banner --redact --verbose .
+
+  semgrep:
+    name: Semgrep (SAST)
+    runs-on: ubuntu-latest
+    container: semgrep/semgrep:1.180.0
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: semgrep scan --config p/default --config p/python --config p/dockerfile --config p/secrets --error --metrics=off
+
+  iac:
+    name: Terraform + Trivy (IaC)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.12.0
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - name: terraform test (bloqueio de SSH aberto, cloud-init valido)
+        run: terraform test
+      - name: Trivy config (Terraform e Dockerfile)
+        working-directory: .
+        run: docker run --rm -v "$PWD:/src" "$TRIVY_IMAGE" config --skip-version-check --severity HIGH,CRITICAL --exit-code 1 /src
+
+  imagem:
+    name: Imagem + Trivy + publicacao
+    needs: [testes, gitleaks, semgrep, iac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Nome da imagem (GHCR exige minusculas)
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+      - name: Build
+        run: >
+          docker build --build-arg GIT_SHA="$GITHUB_SHA"
+          --label org.opencontainers.image.source="https://github.com/$GITHUB_REPOSITORY"
+          -t "$IMAGE:$GITHUB_SHA" app
+      - name: Trivy (vulnerabilidades e segredos na imagem)
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE"
+          image --skip-version-check --scanners vuln,secret --severity HIGH,CRITICAL
+          --ignore-unfixed --exit-code 1 --no-progress "$IMAGE:$GITHUB_SHA"
+      - name: Publicar no GHCR (somente main, somente imagem aprovada)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker tag "$IMAGE:$GITHUB_SHA" "$IMAGE:latest"
+          docker push "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:latest"
+
+  deploy:
+    name: Deploy automatico (producao)
+    needs: imagem
+    if: github.ref == 'refs/heads/main' && vars.APP_URL != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: producao
+      url: ${{ vars.APP_URL }}
+    env:
+      APP_URL: ${{ vars.APP_URL }}
+    steps:
+      - name: Aguardar a VM aplicar a versao aprovada (deploy pull-based, ate 5 min)
+        run: |
+          for i in $(seq 1 30); do
+            v=$(curl -fsS --max-time 10 "$APP_URL/health" | jq -r .version || true)
+            echo "tentativa $i: versao no ar = ${v:-indisponivel}"
+            [ "$v" = "$GITHUB_SHA" ] && exit 0
+            sleep 10
+          done
+          echo "::error::A versao $GITHUB_SHA nao entrou no ar em 5 minutos"
+          exit 1
+      - name: Smoke test de seguranca (/metrics exige token guardado no GitHub Secrets)
+        env:
+          METRICS_TOKEN: ${{ secrets.METRICS_TOKEN }}
+        run: |
+          curl -fsS -o /dev/null -H "Authorization: Bearer $METRICS_TOKEN" "$APP_URL/metrics"
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$APP_URL/metrics")" = "401"
+          curl -fsS "$APP_URL/api/reports" | jq -e '.itens | type == "array"' > /dev/null

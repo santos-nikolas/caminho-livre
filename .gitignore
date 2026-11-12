@@ -1,0 +1,20 @@
+# Segredos e estado: NUNCA versionar
+.env
+*.tfvars
+!*.tfvars.example
+*.tfstate
+*.tfstate.*
+backend.hcl
+.terraform/
+.terraform.lock.hcl.bak
+crash.log
+monitoring/secrets/*
+!monitoring/secrets/.gitkeep
+*.pem
+id_*
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

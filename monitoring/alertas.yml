@@ -1,0 +1,37 @@
+groups:
+  - name: caminho-livre-sinais-de-ouro
+    rules:
+      - alert: CaminhoLivreFora
+        expr: up{job="caminho-livre"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "MVP fora do ar ou /metrics inacessivel"
+          description: "O Prometheus nao consegue raspar {{ $labels.instance }} ha mais de 1 minuto."
+
+      - alert: TaxaDeErrosAlta
+        expr: |
+          sum(rate(http_requests_total{job="caminho-livre",status=~"5.."}[2m]))
+            / clamp_min(sum(rate(http_requests_total{job="caminho-livre"}[2m])), 1e-9) > 0.05
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Mais de 5% das requisicoes com erro 5xx"
+          description: "Taxa de erro atual: {{ $value | humanizePercentage }}"
+
+      - alert: LatenciaP95Alta
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job="caminho-livre"}[5m]))) > 1
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Latencia p95 acima de 1 s"
+          description: "p95 atual: {{ $value | humanizeDuration }}"
+
+      - alert: SaturacaoMemoria
+        expr: process_resident_memory_bytes{job="caminho-livre"} > 200e6
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "API usando mais de 200 MB (limite do container: 256 MB)"
+          description: "Memoria residente: {{ $value | humanize1024 }}B"

@@ -1,0 +1,53 @@
+#cloud-config
+# Provisiona a VM: Docker + stack do compose + atualizador (deploy pull-based) + patches automaticos.
+package_update: true
+package_upgrade: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - unattended-upgrades
+
+write_files:
+  - path: /opt/caminho-livre/docker-compose.yml
+    permissions: "0644"
+    content: |
+      ${indent(6, compose)}
+  - path: /opt/caminho-livre/.env
+    permissions: "0600"
+    content: |
+      POSTGRES_PASSWORD=${postgres_password}
+      ADMIN_TOKEN=${admin_token}
+      METRICS_TOKEN=${metrics_token}
+      API_IMAGE=${api_image}
+      SITE_ADDRESS=${site_address}
+      HTTP_PORT=80
+      HTTPS_PORT=443
+  - path: /etc/systemd/system/caminho-livre-update.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Caminho Livre - aplica a imagem aprovada pelo pipeline (deploy pull-based)
+      Requires=docker.service
+      After=docker.service network-online.target
+      [Service]
+      Type=oneshot
+      WorkingDirectory=/opt/caminho-livre
+      ExecStart=/usr/bin/docker compose pull --quiet api
+      ExecStart=/usr/bin/docker compose up -d --remove-orphans
+  - path: /etc/systemd/system/caminho-livre-update.timer
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Verifica nova versao do Caminho Livre a cada minuto
+      [Timer]
+      OnBootSec=30s
+      OnUnitActiveSec=60s
+      [Install]
+      WantedBy=timers.target
+
+runcmd:
+  # B1s tem 1 GiB de RAM: swap evita OOM durante pull/atualizacoes
+  - [sh, -c, "fallocate -l 1G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab"]
+  - [systemctl, enable, --now, docker]
+  - [systemctl, daemon-reload]
+  - [systemctl, enable, --now, caminho-livre-update.timer]

@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: caminho-livre
+    folder: Caminho Livre
+    options:
+      path: /etc/grafana/provisioning/dashboards

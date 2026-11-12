@@ -1,0 +1,17 @@
+:root { --fg: #1a1a1a; --bg: #fff; --muted: #555; --accent: #0b5cad; --warn-bg: #fff4d6; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+header, main, footer, .aviso { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+header h1 { margin: 16px 0 0; }
+.aviso { background: var(--warn-bg); padding: 8px 16px; border-radius: 6px; }
+main { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { main { grid-template-columns: 2fr 1fr; } main section:last-child { grid-column: 1 / -1; } }
+#mapa { height: 420px; border-radius: 6px; }
+label { display: block; margin-top: 8px; font-weight: 600; }
+select, textarea, input, button { font: inherit; width: 100%; padding: 8px; margin-top: 4px; }
+button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; cursor: pointer; margin-top: 12px; }
+button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #f5a623; }
+#lista { list-style: none; padding: 0; }
+#lista li { border-bottom: 1px solid #ddd; padding: 8px 0; }
+.meta, footer { color: var(--muted); font-size: 14px; }
+.tag { display: inline-block; padding: 0 6px; border-radius: 4px; background: #e8eef7; margin-right: 4px; }
