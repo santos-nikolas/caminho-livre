@@ -16,7 +16,7 @@ Global Solution FIAP 2026.2 (CitizenTech), 4ES. Este repositório traz o MVP e a
 | **Arquitetura: componentes** | Página web (HTML + Leaflet), API FastAPI, PostgreSQL e Caddy (HTTPS), rodando em Docker Compose numa VM Azure criada por Terraform. CI/CD com GitHub Actions (build, testes, Gitleaks, Semgrep e Trivy). Observabilidade com Prometheus, Grafana e Alertmanager. |
 | **Fontes de dados** | (A) OpenStreetMap: mapa base e, no componente de Big Data, a malha de calçadas e travessias. (B) Relatos enviados pelo próprio MVP. Os pontos de demonstração são **sintéticos** e vêm marcados como "demonstração". (C) Open-Meteo, opcional, no componente de Big Data. |
 | **Modelos de IA utilizados** | Detector de obstáculos customizado (YOLO), do componente Applied Computer Vision. Ele **não** faz parte desta entrega de DevOps. |
-| **URL do MVP e repositório** | MVP: `https://caminholivre-gs.brazilsouth.cloudapp.azure.com` *(preencher com o `app_url` do Terraform)*. Repositório: *(link deste repositório)* |
+| **URL do MVP e repositório** | MVP: `https://caminholivre-gs.brazilsouth.cloudapp.azure.com` *(preencher com o `app_url` do Terraform)*. Repositório: https://github.com/santos-nikolas/caminho-livre |
 | **Indicadores de impacto** | Relatos recebidos, relatos revisados, tempo até a primeira revisão, relatos resolvidos com confirmação e taxa de resolução. São indicadores de processo: não provam melhoria física sem verificação. |
 | **ODS conectados** | ODS 10 (redução das desigualdades) e ODS 11 (cidades e comunidades sustentáveis, meta 11.2/11.7: acesso seguro e inclusivo a espaços públicos). |
 
@@ -92,7 +92,7 @@ gh secret set METRICS_TOKEN --body "$(terraform output -raw metrics_token)"
 gh variable set APP_URL --body "$(terraform output -raw app_url)"
 ```
 
-Depois do primeiro push na `main`, deixe a imagem pública: GitHub → Packages → `caminho-livre` → Package settings → Change visibility → Public. A VM puxa sem credencial.
+A imagem `ghcr.io/santos-nikolas/caminho-livre` é pública (herda a visibilidade do repositório público), então a VM puxa sem credencial. Se ela aparecer privada: GitHub → Packages → `caminho-livre` → Package settings → Change visibility → Public.
 
 ## Pipeline DevSecOps (`.github/workflows/devsecops.yml`)
 
