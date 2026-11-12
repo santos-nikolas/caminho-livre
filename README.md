@@ -158,7 +158,7 @@ Salve os prints em `docs/evidencias/` com os nomes indicados nas figuras de `doc
 
 ```powershell
 & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new --no-pdf-header-footer --virtual-time-budget=5000 `
-  --print-to-pdf="$PWD\docselatorio-deploy-blindado.pdf" "file:///$($PWD -replace '\','/')/docs/relatorio.html"
+  --print-to-pdf="$PWD\docs\relatorio-deploy-blindado.pdf" "file:///$($PWD -replace '\\','/')/docs/relatorio.html"
 ```
 
 Figuras sem print aparecem como uma caixa amarela "PRINT PENDENTE".
