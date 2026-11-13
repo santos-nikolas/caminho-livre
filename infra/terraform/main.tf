@@ -13,6 +13,8 @@ terraform {
 provider "azurerm" {
   features {}
   subscription_id = var.subscription_id
+  # Assinatura Starter recusa registrar provedores; Microsoft.Web (unico usado) ja vem registrado
+  resource_provider_registrations = "none"
 }
 
 provider "azuread" {}
@@ -111,12 +113,17 @@ resource "azurerm_linux_web_app" "app" {
 
 # Identidade de deploy do GitHub Actions: OIDC (sem senha/segredo de longa duracao),
 # aceita SO tokens do job no ambiente "producao" deste repositorio, e so pode mexer neste web app.
+data "azuread_client_config" "atual" {}
+
+# owners explicito: o tenant da FIAP nao torna o criador dono, e sem dono o SP e o OIDC sao negados (403)
 resource "azuread_application" "deploy" {
   display_name = "${local.nome}-github-deploy"
+  owners       = [data.azuread_client_config.atual.object_id]
 }
 
 resource "azuread_service_principal" "deploy" {
   client_id = azuread_application.deploy.client_id
+  owners    = [data.azuread_client_config.atual.object_id]
 }
 
 resource "azuread_application_federated_identity_credential" "github" {
