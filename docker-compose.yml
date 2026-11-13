@@ -1,32 +1,16 @@
-# Stack do Caminho Livre. O MESMO arquivo roda local e na VM (Terraform copia via cloud-init).
-# Local: docker-compose.override.yml adiciona o build. Producao: imagem do GHCR.
+# Stack local do Caminho Livre (API + proxy HTTPS). Em producao a MESMA imagem roda no Azure App Service.
+# docker-compose.override.yml adiciona o build a partir do codigo.
 name: caminho-livre
 
 services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: caminholivre
-      POSTGRES_USER: caminholivre
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U caminholivre -d caminholivre"]
-      interval: 10s
-      retries: 5
-    restart: unless-stopped
-    # sem "ports": o banco so e acessivel pela rede interna do compose
-
   api:
     image: ${API_IMAGE:?defina API_IMAGE no .env}
     environment:
-      DATABASE_URL: postgresql://caminholivre:${POSTGRES_PASSWORD}@db:5432/caminholivre
+      DATABASE_PATH: /data/caminholivre.db
       ADMIN_TOKEN: ${ADMIN_TOKEN:?defina ADMIN_TOKEN no .env}
       METRICS_TOKEN: ${METRICS_TOKEN:?defina METRICS_TOKEN no .env}
-    depends_on:
-      db:
-        condition: service_healthy
+    volumes:
+      - dados:/data # unico ponto gravavel: o arquivo do banco
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
@@ -48,6 +32,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  pgdata:
+  dados:
   caddy_data:
   caddy_config:

@@ -2,19 +2,19 @@
 import hmac
 import os
 import re
+import sqlite3
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
 
-import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
-from psycopg.rows import dict_row
 from pydantic import BaseModel, Field
 
-DATABASE_URL = os.environ["DATABASE_URL"]
+# shortcut: SQLite num unico arquivo (a assinatura Azure Starter nao oferece Postgres); trocar por banco gerenciado se houver mais de 1 instancia
+DATABASE_PATH = os.getenv("DATABASE_PATH", "/data/caminholivre.db")
 ADMIN_TOKEN = os.environ["ADMIN_TOKEN"]
 METRICS_TOKEN = os.environ["METRICS_TOKEN"]
 APP_VERSION = os.getenv("APP_VERSION", "dev")
@@ -49,22 +49,22 @@ class Revisao(BaseModel):
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS relatos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  criado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
-  latitude DOUBLE PRECISION NOT NULL,
-  longitude DOUBLE PRECISION NOT NULL,
+  id TEXT PRIMARY KEY,
+  criado_em TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  atualizado_em TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  latitude REAL NOT NULL,
+  longitude REAL NOT NULL,
   categoria TEXT NOT NULL,
   descricao_sanitizada TEXT,
   status TEXT NOT NULL DEFAULT 'pendente',
   fonte TEXT NOT NULL DEFAULT 'cidadao'
 );
 CREATE TABLE IF NOT EXISTS historico_status (
-  id BIGSERIAL PRIMARY KEY,
-  relato_id UUID NOT NULL REFERENCES relatos(id),
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  relato_id TEXT NOT NULL REFERENCES relatos(id),
   de TEXT NOT NULL,
   para TEXT NOT NULL,
-  em TIMESTAMPTZ NOT NULL DEFAULT now(),
+  em TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   papel TEXT NOT NULL
 );
 """
@@ -90,20 +90,29 @@ def sanitizar(texto: str | None) -> str | None:
     return texto.strip() or None
 
 
+@contextmanager
 def conectar():
-    return psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=5)
+    # autocommit; transacoes explicitas onde ha leitura + escrita (revisar)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=15, isolation_level=None)
+    conn.row_factory = lambda cur, row: {col[0]: v for col, v in zip(cur.description, row)}
+    conn.execute("PRAGMA foreign_keys = ON")
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 @asynccontextmanager
 async def lifespan(_app):
+    os.makedirs(os.path.dirname(DATABASE_PATH) or ".", exist_ok=True)
     with conectar() as conn:
-        conn.execute(SCHEMA)
+        conn.executescript(SCHEMA)
         vazio = conn.execute("SELECT count(*) AS n FROM relatos").fetchone()["n"] == 0
         if SEED_DEMO and vazio:
             for lat, lon, cat, desc in DEMO:
                 conn.execute(
-                    "INSERT INTO relatos (latitude, longitude, categoria, descricao_sanitizada, fonte)"
-                    " VALUES (%s, %s, %s, %s, 'sintetico')", (lat, lon, cat, desc))
+                    "INSERT INTO relatos (id, latitude, longitude, categoria, descricao_sanitizada, fonte)"
+                    " VALUES (?, ?, ?, ?, ?, 'sintetico')", (str(uuid4()), lat, lon, cat, desc))
     yield
 
 
@@ -154,7 +163,7 @@ def health():
     try:
         with conectar() as conn:
             conn.execute("SELECT 1")
-    except psycopg.Error:
+    except sqlite3.Error:
         raise HTTPException(status_code=503, detail="banco indisponivel")
     return {"status": "ok", "version": APP_VERSION}
 
@@ -174,8 +183,8 @@ def listar(categoria: Categoria | None = None, status: Status | None = None):
     with conectar() as conn:
         linhas = conn.execute(
             "SELECT id, criado_em, atualizado_em, latitude, longitude, categoria, descricao_sanitizada,"
-            " status, fonte FROM relatos WHERE (%(c)s::text IS NULL OR categoria = %(c)s)"
-            " AND (%(s)s::text IS NULL OR status = %(s)s) ORDER BY criado_em DESC LIMIT 500",
+            " status, fonte FROM relatos WHERE (:c IS NULL OR categoria = :c)"
+            " AND (:s IS NULL OR status = :s) ORDER BY criado_em DESC LIMIT 500",
             {"c": categoria and categoria.value, "s": status and status.value}).fetchall()
     return {"atualizado_em": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "itens": linhas}
 
@@ -185,26 +194,33 @@ def criar(relato: NovoRelato):
     min_lat, min_lon, max_lat, max_lon = BBOX
     if not (min_lat <= relato.latitude <= max_lat and min_lon <= relato.longitude <= max_lon):
         raise HTTPException(status_code=422, detail="localizacao fora do territorio do piloto")
+    rid = str(uuid4())
     with conectar() as conn:
         # LGPD: coordenada arredondada (~11 m) - localizacao aproximada, nao exata
-        linha = conn.execute(
-            "INSERT INTO relatos (latitude, longitude, categoria, descricao_sanitizada)"
-            " VALUES (%s, %s, %s, %s) RETURNING id, status",
-            (round(relato.latitude, 4), round(relato.longitude, 4), relato.categoria.value,
-             sanitizar(relato.descricao))).fetchone()
-    return linha
+        conn.execute(
+            "INSERT INTO relatos (id, latitude, longitude, categoria, descricao_sanitizada) VALUES (?, ?, ?, ?, ?)",
+            (rid, round(relato.latitude, 4), round(relato.longitude, 4), relato.categoria.value,
+             sanitizar(relato.descricao)))
+    return {"id": rid, "status": Status.pendente}
 
 
 @app.patch("/api/admin/reports/{relato_id}", dependencies=[Depends(exigir_token(ADMIN_TOKEN))])
 def revisar(relato_id: UUID, revisao: Revisao):
+    rid = str(relato_id)
     with conectar() as conn:
-        atual = conn.execute("SELECT status FROM relatos WHERE id = %s FOR UPDATE", (relato_id,)).fetchone()
-        if not atual:
-            raise HTTPException(status_code=404, detail="relato nao encontrado")
-        conn.execute("UPDATE relatos SET status = %s, atualizado_em = now() WHERE id = %s",
-                     (revisao.status.value, relato_id))
-        conn.execute("INSERT INTO historico_status (relato_id, de, para, papel) VALUES (%s, %s, %s, 'gestor')",
-                     (relato_id, atual["status"], revisao.status.value))
+        conn.execute("BEGIN IMMEDIATE")  # trava de escrita: leitura + update + historico atomicos
+        try:
+            atual = conn.execute("SELECT status FROM relatos WHERE id = ?", (rid,)).fetchone()
+            if not atual:
+                raise HTTPException(status_code=404, detail="relato nao encontrado")
+            conn.execute("UPDATE relatos SET status = ?, atualizado_em = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) WHERE id = ?",
+                         (revisao.status.value, rid))
+            conn.execute("INSERT INTO historico_status (relato_id, de, para, papel) VALUES (?, ?, ?, 'gestor')",
+                         (rid, atual["status"], revisao.status.value))
+            conn.execute("COMMIT")
+        except BaseException:
+            conn.execute("ROLLBACK")
+            raise
     return {"id": relato_id, "status": revisao.status}
 
 

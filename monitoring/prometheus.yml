@@ -17,6 +17,6 @@ scrape_configs:
     authorization:
       credentials_file: /etc/prometheus/secrets/metrics_token # token fora do repositorio
     static_configs:
-      - targets: ["caminholivre-gs.brazilsouth.cloudapp.azure.com"] # = output app_url do Terraform
+      - targets: ["caminholivre-gs.azurewebsites.net"] # host do output app_url do Terraform
         labels:
           ambiente: producao

@@ -1,7 +1,5 @@
 # Copie para terraform.tfvars (ignorado pelo git) e preencha.
-subscription_id     = "00000000-0000-0000-0000-000000000000"
-admin_cidr          = "200.100.50.25/32" # seu IP publico: curl -s ifconfig.me
-ssh_public_key_path = "~/.ssh/id_ed25519.pub"
-api_image           = "ghcr.io/santos-nikolas/caminho-livre:latest"
-# location  = "brazilsouth"
-# dns_label = "caminholivre-gs"
+subscription_id = "00000000-0000-0000-0000-000000000000" # az account show --query id -o tsv
+admin_cidr      = "200.100.50.25/32"                     # seu IP publico: curl -s ifconfig.me
+# app_name    = "caminholivre-gs"  # vira <app_name>.azurewebsites.net (nome global)
+# location    = "brazilsouth"

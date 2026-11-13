@@ -1,6 +1,9 @@
-"""Testes de integracao: exigem Postgres em DATABASE_URL (servico no CI / docker compose)."""
+"""Testes de integracao: API completa sobre um banco SQLite temporario."""
 import os
+import tempfile
+import uuid
 
+os.environ.setdefault("DATABASE_PATH", os.path.join(tempfile.mkdtemp(), "teste.db"))
 os.environ.setdefault("ADMIN_TOKEN", "token-admin-teste")
 os.environ.setdefault("METRICS_TOKEN", "token-metricas-teste")
 
@@ -34,6 +37,8 @@ def test_validacoes_e_autorizacao():
         assert c.patch(f"/api/admin/reports/{rid}", json={"status": "resolvido"}).status_code == 401
         assert c.patch(f"/api/admin/reports/{rid}", json={"status": "resolvido"},
                        headers={"Authorization": "Bearer errado"}).status_code == 401
+        assert c.patch(f"/api/admin/reports/{uuid.uuid4()}", json={"status": "resolvido"},
+                       headers=ADMIN).status_code == 404
 
 
 def test_metricas_protegidas_e_sinais_de_ouro():

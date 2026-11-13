@@ -1,6 +1,6 @@
 # Pipeline DevSecOps do Caminho Livre: nada chega ao cidadao sem passar pelos portoes de seguranca.
 # push (qualquer branch): testes + build + Gitleaks + Semgrep + Trivy (IaC e imagem)
-# push na main: publica a imagem aprovada no GHCR e confirma o deploy automatico na VM.
+# push na main: publica a imagem aprovada no GHCR, faz o deploy no Azure App Service (OIDC) e confirma a versao no ar.
 name: DevSecOps
 
 on:
@@ -22,15 +22,6 @@ jobs:
   testes:
     name: Build e testes
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: caminholivre
-          POSTGRES_USER: caminholivre
-          POSTGRES_PASSWORD: somente-ci
-        ports: ["5432:5432"]
-        options: --health-cmd "pg_isready -U caminholivre" --health-interval 5s --health-retries 10
     defaults:
       run:
         working-directory: app
@@ -43,8 +34,6 @@ jobs:
           cache-dependency-path: app/requirements-dev.txt
       - run: pip install -r requirements-dev.txt
       - run: python -m pytest -q
-        env:
-          DATABASE_URL: postgresql://caminholivre:somente-ci@localhost:5432/caminholivre
 
   gitleaks:
     name: Gitleaks (segredos no historico)
@@ -123,21 +112,37 @@ jobs:
     needs: imagem
     if: github.ref == 'refs/heads/main' && vars.APP_URL != ''
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC: token de curta duracao, sem senha da nuvem guardada no GitHub
     environment:
       name: producao
       url: ${{ vars.APP_URL }}
     env:
       APP_URL: ${{ vars.APP_URL }}
     steps:
-      - name: Aguardar a VM aplicar a versao aprovada (deploy pull-based, ate 5 min)
+      - name: Login na Azure via OIDC (identidade criada pelo Terraform, so pode alterar este web app)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Publicar a imagem aprovada (tag = SHA do commit) no App Service
+        env:
+          APP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: >
+          az webapp config container set -g "$RG" -n "$APP_NAME" -o none
+          --container-image-name "ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA"
+      - name: Aguardar a versao aprovada entrar no ar (ate 10 min)
         run: |
-          for i in $(seq 1 30); do
-            v=$(curl -fsS --max-time 10 "$APP_URL/health" | jq -r .version || true)
+          for i in $(seq 1 60); do
+            v=$(curl -fsS --max-time 20 "$APP_URL/health" | jq -r .version || true)
             echo "tentativa $i: versao no ar = ${v:-indisponivel}"
             [ "$v" = "$GITHUB_SHA" ] && exit 0
             sleep 10
           done
-          echo "::error::A versao $GITHUB_SHA nao entrou no ar em 5 minutos"
+          echo "::error::A versao $GITHUB_SHA nao entrou no ar em 10 minutos"
           exit 1
       - name: Smoke test de seguranca (/metrics exige token guardado no GitHub Secrets)
         env:

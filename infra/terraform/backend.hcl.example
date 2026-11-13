@@ -1,5 +1,0 @@
-# Copie para backend.hcl (ignorado pelo git) com os nomes criados por infra/bootstrap/criar-state.sh
-resource_group_name  = "rg-caminholivre-tfstate"
-storage_account_name = "sttfstatexxxxxx"
-container_name       = "tfstate"
-key                  = "caminho-livre.tfstate"

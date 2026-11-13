@@ -9,20 +9,20 @@ variable "location" {
   default     = "brazilsouth"
 }
 
-variable "dns_label" {
-  description = "Rotulo DNS publico: <dns_label>.<location>.cloudapp.azure.com"
+variable "app_name" {
+  description = "Nome global do web app: <app_name>.azurewebsites.net"
   type        = string
   default     = "caminholivre-gs"
 }
 
-variable "vm_size" {
-  description = "Tamanho da VM (B1s entra no free tier de 750 h/mes de contas novas/estudante)"
+variable "sku" {
+  description = "Plano do App Service. F1 = gratuito (60 min de CPU/dia, sem Always On)."
   type        = string
-  default     = "Standard_B1s"
+  default     = "F1"
 }
 
 variable "admin_cidr" {
-  description = "IP/CIDR do administrador liberado no SSH, ex.: 200.100.50.25/32"
+  description = "IP/CIDR do administrador liberado no SCM/Kudu (porta administrativa), ex.: 200.100.50.25/32"
   type        = string
 
   validation {
@@ -32,13 +32,14 @@ variable "admin_cidr" {
   }
 }
 
-variable "ssh_public_key_path" {
-  description = "Caminho da chave publica SSH do administrador"
+variable "api_image" {
+  description = "Imagem publicada pelo pipeline no GHCR, sem registro e sem tag: <owner>/caminho-livre"
   type        = string
-  default     = "~/.ssh/id_ed25519.pub"
+  default     = "santos-nikolas/caminho-livre"
 }
 
-variable "api_image" {
-  description = "Imagem publicada pelo pipeline, ex.: ghcr.io/<owner>/caminho-livre:latest"
+variable "github_repo" {
+  description = "Repositorio autorizado a fazer deploy via OIDC (owner/nome)"
   type        = string
+  default     = "santos-nikolas/caminho-livre"
 }
