@@ -10,7 +10,8 @@ ARG GIT_SHA=dev
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_VERSION=${GIT_SHA}
 # Aplica patches de seguranca do SO que a imagem base ainda nao trouxe (barrado pelo Trivy: zlib1g CVE HIGH)
 RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/* \
- && useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app \n && mkdir /data && chown 10001 /data
+ && useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app \
+ && mkdir /data && chown 10001 /data
 COPY --from=build /install /usr/local
 WORKDIR /app
 COPY main.py ./
