@@ -145,7 +145,7 @@ GRAFANA_ADMIN_PASSWORD='<senha-forte>' docker compose up -d
 
 - Grafana: http://localhost:3000, dashboard **Caminho Livre - 4 sinais de ouro**: latência (p50/p95/p99), tráfego (req/s por rota), erros (4xx/5xx e % de 5xx) e saturação (CPU, memória, requisições em andamento).
 - Alertas (`alertas.yml`): `CaminhoLivreFora`, `TaxaDeErrosAlta` (>5% de 5xx), `LatenciaP95Alta` (>1 s) e `SaturacaoMemoria` (>200 MB).
-- **Disparar um alerta de verdade:** rode `az webapp stop -g rg-caminholivre -n caminholivre-gs`. A raspagem falha, o `CaminhoLivreFora` vai para *firing* em cerca de 1 min e a mensagem chega ao Discord. Depois, rode `az webapp start ...` e o alerta é resolvido.
+- **Disparar um alerta de verdade:** rode `az webapp stop -g rg-caminholivre -n caminholivre-gs`. A raspagem falha, o `CaminhoLivreFora` vai para *firing* em cerca de 1 min e o Alertmanager envia a mensagem ao Discord (se o webhook estiver em `secrets/discord_webhook`). Depois, rode `az webapp start ...` e o alerta é resolvido. Execução real em 13/11/2026: *firing* 1 min 48 s depois do stop e resolvido 5 s depois de o app voltar (relatório, seção 5).
 
 ## Segurança e LGPD (resumo)
 

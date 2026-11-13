@@ -164,7 +164,7 @@
   <tr><td>Patches do SO na imagem</td><td><code>apt-get upgrade</code> no estágio final. Foi uma correção exigida pelo Trivy (seção 4.3).</td><td><code>app/Dockerfile</code></td></tr>
   <tr><td>Stack com docker compose</td><td><code>api</code> (com o volume <code>dados</code>) e <code>proxy</code> (Caddy, HTTPS automático quando há domínio). O override local acrescenta o <code>build</code>. Em produção, a mesma imagem roda no App Service.</td><td><code>docker-compose.yml</code></td></tr>
 </table>
-<figure><img src="evidencias/01-compose-ps.png" alt="docker compose ps"><figcaption>Figura 1: <code>docker compose ps</code> com a stack no ar e <code>docker compose exec api id</code> mostrando uid 10001 (não-root).</figcaption></figure>
+<figure><img src="evidencias/01-compose-ps.png" alt="docker compose ps"><figcaption>Figura 1: <code>docker compose ps</code> com a stack no ar e <code>docker compose exec api id</code> mostrando uid 10001 (não-root). A tentativa de gravar em <code>/app</code> falha porque o sistema de arquivos do container é somente leitura.</figcaption></figure>
 
 <h3>3.2 Terraform: state e .tfvars fora do repositório, porta admin nunca em 0.0.0.0/0</h3>
 <table>
@@ -187,9 +187,18 @@ Success! 3 passed, 0 failed.</pre>
   <li>o OIDC só aceita o environment <code>producao</code> deste repositório;</li>
   <li>o papel de deploy vale só para este web app.</li>
 </ul>
-<figure><img src="evidencias/02-terraform-apply.png" alt="terraform apply"><figcaption>Figura 2: <code>terraform apply</code> concluído com os outputs (<code>app_url</code>, <code>app_name</code>).</figcaption></figure>
+<figure><img src="evidencias/02-terraform-apply.png" alt="terraform apply"><figcaption>Figura 2: último <code>terraform apply</code> concluído, com os outputs (os tokens aparecem como <code>&lt;sensitive&gt;</code>). Abaixo, os 10 recursos no state remoto e um <code>plan</code> sem mudanças, que mostra a nuvem igual ao código.</figcaption></figure>
 <figure><img src="evidencias/03-scm-restricao.png" alt="restrição do SCM"><figcaption>Figura 3: restrições de acesso do web app no portal Azure. O site SCM/Kudu só aceita o IP /32 do administrador e nega o resto.</figcaption></figure>
 <figure><img src="evidencias/04-hcp-state.png" alt="state remoto"><figcaption>Figura 4: workspace no HCP Terraform com o state e o histórico de versões (fora do Git).</figcaption></figure>
+
+<h3>3.3 Problemas reais no provisionamento</h3>
+<table>
+  <tr><th>Problema</th><th>Causa</th><th>Solução</th></tr>
+  <tr><td><code>plan</code> falhava ao registrar provedores</td><td>A assinatura Starter não permite registrar provedores de recurso.</td><td><code>resource_provider_registrations = "none"</code>. O único provedor usado, <code>Microsoft.Web</code>, já vem registrado.</td></tr>
+  <tr><td>403 ao criar o <em>service principal</em> e a credencial OIDC</td><td>O tenant da FIAP não torna dono quem cria a aplicação, e uma aplicação sem dono não pode ser alterada.</td><td><code>owners</code> explícito com o usuário que roda o Terraform, lido de <code>azuread_client_config</code>.</td></tr>
+  <tr><td>Primeiro deploy recusado no login (<code>AADSTS700213</code>)</td><td>O GitHub passou a emitir o <em>subject</em> OIDC com os IDs imutáveis do dono e do repositório (<code>santos-nikolas@126473396/caminho-livre@1454716396</code>).</td><td>Credencial federada atualizada para esse formato. Ganho de segurança: um repositório recriado ou renomeado com o mesmo nome não herda o acesso de deploy.</td></tr>
+  <tr><td>Conexões com a Azure cortadas no <code>apply</code></td><td>A rota IPv6 da rede da equipe até a Azure derrubava as conexões: 9 de 12 testes falharam por IPv6, 0 de 12 por IPv4.</td><td>O <code>apply</code> rodou por um proxy local que só sai por IPv4. Cada nova tentativa do Terraform criava só o que faltava, sem duplicar recursos.</td></tr>
+</table>
 
 <h2 class="quebra">4. Pipeline DevSecOps (4,0)</h2>
 <p>Arquivo: <code>.github/workflows/devsecops.yml</code>. Roda em <strong>todo push</strong>, em qualquer branch.</p>
@@ -208,9 +217,9 @@ Success! 3 passed, 0 failed.</pre>
   <li><code>METRICS_TOKEN</code>: usado no smoke test autenticado.</li>
 </ul>
 <p>O push para o GHCR usa o <code>GITHUB_TOKEN</code> efêmero, com <code>packages: write</code> só no job de imagem. O <code>id-token: write</code> existe só no job de deploy, e o padrão do workflow é <code>contents: read</code>.</p>
-<figure><img src="evidencias/05-github-secrets.png" alt="GitHub Secrets"><figcaption>Figura 5: Settings → Secrets and variables → Actions (segredos e variáveis do deploy).</figcaption></figure>
+<figure><img src="evidencias/05-github-secrets.png" alt="GitHub Secrets"><figcaption>Figura 5: segredos e variáveis do repositório listados com o <code>gh</code> CLI. Os valores nunca são exibidos, só nomes e datas.</figcaption></figure>
 <figure><img src="evidencias/06-pipeline-verde.png" alt="pipeline verde"><figcaption>Figura 6: execução completa na <code>main</code> com todos os jobs verdes, incluindo o deploy.</figcaption></figure>
-<figure><img src="evidencias/07-deploy-log.png" alt="log do deploy"><figcaption>Figura 7: log do job <em>Deploy automático</em> confirmando a nova versão (SHA) no ar.</figcaption></figure>
+<figure><img src="evidencias/07-deploy-log.png" alt="log do deploy"><figcaption>Figura 7: log do job <em>Deploy automático</em>. O App Service recebe a imagem <code>:SHA</code>, o <code>/health</code> confirma a versão <code>ab322ba…</code> no ar e o smoke test usa o token mascarado (<code>***</code>).</figcaption></figure>
 
 <h3>4.3 Execução barrada e corrigida</h3>
 <p><strong>Caso real no desenvolvimento:</strong> na primeira varredura da imagem, o Trivy barrou o build com 2 vulnerabilidades HIGH no pacote <code>zlib1g</code> da imagem base Debian 13 (CVE-2026-85091, <em>heap buffer overflow</em>), já corrigidas na versão <code>1:1.3.dfsg+really1.3.1-1+deb13u1</code>. A correção foi aplicar os patches do SO no Dockerfile (<code>apt-get upgrade</code>). Com isso a varredura passou a mostrar 0 HIGH/CRITICAL.</p>
@@ -224,7 +233,7 @@ Success! 3 passed, 0 failed.</pre>
   <tr><th>Sinal de ouro</th><th>Métrica / PromQL</th></tr>
   <tr><td>Latência</td><td><code>histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))</code> (p50/p95/p99)</td></tr>
   <tr><td>Tráfego</td><td><code>sum by (route) (rate(http_requests_total[1m]))</code></td></tr>
-  <tr><td>Erros</td><td><code>sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))</code></td></tr>
+  <tr><td>Erros</td><td><code>(sum(rate(http_requests_total{status=~"5.."}[5m])) or vector(0)) / sum(rate(http_requests_total[5m]))</code> (mostra 0% quando não há erro)</td></tr>
   <tr><td>Saturação</td><td><code>process_resident_memory_bytes</code>, <code>rate(process_cpu_seconds_total[1m])</code> (o F1 tem cota de CPU), <code>http_requests_in_progress</code></td></tr>
 </table>
 <table>
@@ -234,9 +243,18 @@ Success! 3 passed, 0 failed.</pre>
   <tr><td>LatenciaP95Alta</td><td>p95 &gt; 1 s por 5 min</td><td>warning</td></tr>
   <tr><td>SaturacaoMemoria</td><td>&gt; 200 MB por 5 min</td><td>warning</td></tr>
 </table>
-<p><strong>Disparo do alerta com uma falha real:</strong> o web app de produção é parado (<code>az webapp stop</code>). A raspagem do Prometheus falha, e o <code>CaminhoLivreFora</code> vai para <em>firing</em> e é enviado pelo Alertmanager. Com <code>az webapp start</code>, o alerta é resolvido. Não existe nenhum endpoint de "erro proposital" exposto em produção.</p>
-<figure><img src="evidencias/10-grafana-sinais-de-ouro.png" alt="dashboard"><figcaption>Figura 10: dashboard <em>Caminho Livre - 4 sinais de ouro</em> no Grafana, alimentado pelo MVP publicado.</figcaption></figure>
-<figure><img src="evidencias/11-alerta-disparado.png" alt="alerta disparado"><figcaption>Figura 11: alerta em <em>firing</em> no Prometheus/Alertmanager durante a queda provocada.</figcaption></figure>
+<p><strong>Disparo do alerta com uma falha real (13/11/2026, horário de Brasília):</strong></p>
+<ul>
+  <li><strong>19:47:20:</strong> o web app de produção foi parado com <code>az webapp stop</code>.</li>
+  <li><strong>19:48:07:</strong> a raspagem do Prometheus passou a falhar.</li>
+  <li><strong>19:49:08:</strong> depois de 1 min, o <code>CaminhoLivreFora</code> foi para <em>firing</em> e chegou ao Alertmanager.</li>
+  <li><strong>19:49:39:</strong> o app foi religado com <code>az webapp start</code>.</li>
+  <li><strong>19:50:19:</strong> o MVP voltou.</li>
+  <li><strong>19:50:24:</strong> o alerta foi resolvido.</li>
+</ul>
+<p>O Alertmanager entrega no canal do Discord cujo webhook estiver em <code>monitoring/secrets/discord_webhook</code>, fora do Git. Não existe nenhum endpoint de "erro proposital" exposto em produção.</p>
+<figure><img src="evidencias/10-grafana-sinais-de-ouro.png" alt="dashboard"><figcaption>Figura 10: dashboard <em>Caminho Livre - 4 sinais de ouro</em> no Grafana, alimentado pelo MVP publicado. O tráfego vem de uma carga leve gerada pela equipe; os 404 são de uma rota inexistente incluída de propósito na carga.</figcaption></figure>
+<figure><img src="evidencias/11-alerta-disparado.png" alt="alerta disparado"><figcaption>Figura 11: <code>CaminhoLivreFora</code> em <em>firing</em> no Prometheus durante a queda provocada, com a instância <code>caminholivre-gs.azurewebsites.net</code> e <code>up = 0</code>.</figcaption></figure>
 
 <h2 class="quebra">6. MVP publicado</h2>
 <figure><img src="evidencias/12-mvp-url-publica.png" alt="MVP"><figcaption>Figura 12: MVP aberto na URL pública (HTTPS), com mapa, formulário e lista de relatos.</figcaption></figure>

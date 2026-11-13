@@ -225,7 +225,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum(rate(http_requests_total{job=\"caminho-livre\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_requests_total{job=\"caminho-livre\"}[5m])), 1e-9)"
+     "expr": "(sum(rate(http_requests_total{job=\"caminho-livre\",status=~\"5..\"}[5m])) or vector(0)) / clamp_min(sum(rate(http_requests_total{job=\"caminho-livre\"}[5m])), 1e-9)"
     }
    ]
   },
