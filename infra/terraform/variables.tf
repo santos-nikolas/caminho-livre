@@ -39,7 +39,8 @@ variable "api_image" {
 }
 
 variable "github_repo" {
-  description = "Repositorio autorizado a fazer deploy via OIDC (owner/nome)"
+  # Formato do subject OIDC atual do GitHub: owner@id/repo@id (IDs imutaveis: renomear ou recriar o repo nao herda o acesso)
+  description = "Repositorio autorizado a fazer deploy via OIDC (owner@id/nome@id)"
   type        = string
-  default     = "santos-nikolas/caminho-livre"
+  default     = "santos-nikolas@126473396/caminho-livre@1454716396"
 }

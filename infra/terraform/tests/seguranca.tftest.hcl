@@ -67,7 +67,7 @@ run "infra_segura_com_ip_do_admin" {
     error_message = "Publicacao por usuario/senha deve estar desligada"
   }
   assert {
-    condition     = azuread_application_federated_identity_credential.github.subject == "repo:santos-nikolas/caminho-livre:environment:producao"
+    condition     = azuread_application_federated_identity_credential.github.subject == "repo:santos-nikolas@126473396/caminho-livre@1454716396:environment:producao"
     error_message = "OIDC deve aceitar somente o ambiente producao deste repositorio"
   }
   assert {
