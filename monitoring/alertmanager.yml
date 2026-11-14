@@ -1,11 +1,13 @@
-# Envia os alertas para um canal do Discord. A URL do webhook fica em secrets/ (fora do git).
+# Envia os alertas por push (ntfy.sh): sem conta nem servidor, chega no navegador e no app do celular.
+# A URL (topico aleatorio + template da mensagem) fica em secrets/ntfy_url, fora do git.
 route:
-  receiver: discord
+  receiver: ntfy
   group_by: [alertname]
   group_wait: 10s
+  group_interval: 1m # avisa o "resolvido" em ~1 min (padrao: 5 min)
   repeat_interval: 1h
 receivers:
-  - name: discord
-    discord_configs:
-      - webhook_url_file: /etc/alertmanager/secrets/discord_webhook
+  - name: ntfy
+    webhook_configs:
+      - url_file: /etc/alertmanager/secrets/ntfy_url
         send_resolved: true

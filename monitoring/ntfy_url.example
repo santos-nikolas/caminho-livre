@@ -1,0 +1,1 @@
+https://ntfy.sh/TOPICO?tpl=yes&t=Caminho%20Livre%3A%20%7B%7B.status%7D%7D&m=%7B%7Brange%20.alerts%7D%7D%5B%7B%7B.status%7D%7D%5D%20%7B%7B.labels.alertname%7D%7D%20%28%7B%7B.labels.severity%7D%7D%29%3A%20%7B%7B.annotations.summary%7D%7D%0A%7B%7Bend%7D%7D&ta=rotating_light

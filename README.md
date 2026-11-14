@@ -46,7 +46,7 @@ flowchart LR
   cidadao[Cidadão / gestor] -- HTTPS --> api
   gh -- verifica versão no ar --> api
   prom[Prometheus + Grafana + Alertmanager<br/>local] -- /metrics com token --> api
-  prom --> discord[Alerta no Discord]
+  prom --> ntfy[Alerta push<br/>ntfy.sh]
   tf[(tfstate no HCP Terraform)] --- Azure
 ```
 
@@ -139,13 +139,13 @@ Prometheus, Grafana e Alertmanager rodam **localmente** e raspam o MVP publicado
 ```bash
 cd monitoring
 terraform -chdir=../infra/terraform output -raw metrics_token > secrets/metrics_token
-echo "https://discord.com/api/webhooks/..." > secrets/discord_webhook   # webhook de um canal da equipe
+sed "s/TOPICO/caminholivre-$(openssl rand -hex 8)/" ntfy_url.example > secrets/ntfy_url   # topico aleatorio, fora do git
 GRAFANA_ADMIN_PASSWORD='<senha-forte>' docker compose up -d
 ```
 
 - Grafana: http://localhost:3000, dashboard **Caminho Livre - 4 sinais de ouro**: latência (p50/p95/p99), tráfego (req/s por rota), erros (4xx/5xx e % de 5xx) e saturação (CPU, memória, requisições em andamento).
 - Alertas (`alertas.yml`): `CaminhoLivreFora`, `TaxaDeErrosAlta` (>5% de 5xx), `LatenciaP95Alta` (>1 s) e `SaturacaoMemoria` (>200 MB).
-- **Disparar um alerta de verdade:** rode `az webapp stop -g rg-caminholivre -n caminholivre-gs`. A raspagem falha, o `CaminhoLivreFora` vai para *firing* em cerca de 1 min e o Alertmanager envia a mensagem ao Discord (se o webhook estiver em `secrets/discord_webhook`). Depois, rode `az webapp start ...` e o alerta é resolvido. Execução real em 13/11/2026: *firing* 1 min 48 s depois do stop e resolvido 5 s depois de o app voltar (relatório, seção 5).
+- **Disparar um alerta de verdade:** rode `az webapp stop -g rg-caminholivre -n caminholivre-gs`. A raspagem falha, o `CaminhoLivreFora` vai para *firing* em cerca de 1 min e o Alertmanager manda uma notificação push pelo [ntfy.sh](https://ntfy.sh). O ntfy não exige conta: basta abrir `https://ntfy.sh/<topico>` no navegador ou assinar o tópico no app do celular. Depois, rode `az webapp start ...` e chega a notificação de *resolved*. Execuções reais em 13/11/2026 estão no relatório, seção 5. As mensagens levam só o nome do alerta e o host público, nenhum dado pessoal.
 
 ## Segurança e LGPD (resumo)
 

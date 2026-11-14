@@ -126,7 +126,7 @@
     <text x="810" y="260" text-anchor="middle" font-size="11">Grafana · Alertmanager</text>
     <text x="810" y="278" text-anchor="middle" font-size="10.5">(local)</text>
     <rect x="730" y="330" width="160" height="44" rx="6" fill="#fff" stroke="#59636e"/>
-    <text x="810" y="357" text-anchor="middle">Discord (alerta)</text>
+    <text x="810" y="357" text-anchor="middle">ntfy.sh (alerta push)</text>
   </g>
   <g stroke="#444" stroke-width="1.5" fill="none">
     <path d="M110 64 V94" marker-end="url(#s)"/>
@@ -252,12 +252,21 @@ Success! 3 passed, 0 failed.</pre>
   <li><strong>19:50:19:</strong> o MVP voltou.</li>
   <li><strong>19:50:24:</strong> o alerta foi resolvido.</li>
 </ul>
-<p>O Alertmanager entrega no canal do Discord cujo webhook estiver em <code>monitoring/secrets/discord_webhook</code>, fora do Git. Não existe nenhum endpoint de "erro proposital" exposto em produção.</p>
+<p><strong>Entrega do alerta:</strong> o Alertmanager envia uma notificação push pelo <a href="https://ntfy.sh">ntfy.sh</a>. Ele não exige conta nem servidor, e a equipe recebe o alerta no navegador ou no app do celular. A URL, com um tópico aleatório, fica em <code>monitoring/secrets/ntfy_url</code>, fora do Git. As mensagens levam só o nome do alerta, a severidade e o host público, nenhum dado pessoal.</p>
+<p><strong>Segunda queda provocada, com a entrega testada:</strong></p>
+<ul>
+  <li><strong>20:56:53:</strong> o app foi parado.</li>
+  <li><strong>20:59:</strong> a notificação de <em>firing</em> chegou ao ntfy.</li>
+  <li><strong>20:59:50:</strong> o app foi religado e voltou ao ar.</li>
+  <li><strong>21:04:</strong> chegou a notificação de <em>resolved</em>.</li>
+</ul>
+<p>O aviso de <em>resolved</em> demorou porque o Alertmanager agrupa as mensagens em janelas de 5 min por padrão. A janela foi reduzida para 1 min (<code>group_interval</code>). Não existe nenhum endpoint de "erro proposital" exposto em produção.</p>
 <figure><img src="evidencias/10-grafana-sinais-de-ouro.png" alt="dashboard"><figcaption>Figura 10: dashboard <em>Caminho Livre - 4 sinais de ouro</em> no Grafana, alimentado pelo MVP publicado. O tráfego vem de uma carga leve gerada pela equipe; os 404 são de uma rota inexistente incluída de propósito na carga.</figcaption></figure>
 <figure><img src="evidencias/11-alerta-disparado.png" alt="alerta disparado"><figcaption>Figura 11: <code>CaminhoLivreFora</code> em <em>firing</em> no Prometheus durante a queda provocada, com a instância <code>caminholivre-gs.azurewebsites.net</code> e <code>up = 0</code>.</figcaption></figure>
+<figure><img src="evidencias/12-alerta-notificacao.png" alt="notificação do alerta"><figcaption>Figura 12: notificações push recebidas no ntfy: o teste de entrega, o <em>firing</em> do <code>CaminhoLivreFora</code> durante a queda e o <em>resolved</em> depois que o app voltou. O nome do tópico foi ocultado.</figcaption></figure>
 
 <h2 class="quebra">6. MVP publicado</h2>
-<figure><img src="evidencias/12-mvp-url-publica.png" alt="MVP"><figcaption>Figura 12: MVP aberto na URL pública (HTTPS), com mapa, formulário e lista de relatos.</figcaption></figure>
+<figure><img src="evidencias/13-mvp-url-publica.png" alt="MVP"><figcaption>Figura 13: MVP aberto na URL pública (HTTPS), com mapa, formulário e lista de relatos.</figcaption></figure>
 
 <h2>7. Responsabilidade compartilhada (modelo PaaS)</h2>
 <table>
@@ -302,7 +311,7 @@ Success! 3 passed, 0 failed.</pre>
 
 <h2>10. Riscos conhecidos e próximos passos</h2>
 <ul>
-  <li><strong>SQLite em armazenamento de rede:</strong> funciona com uma instância e pouca escrita, que é o caso do piloto. Para escalar, migrar para um banco gerenciado (Azure SQL ou PostgreSQL Flexible Server).</li>
+  <li><strong>SQLite em armazenamento de rede:</strong> funciona com uma instância e pouca escrita, que é o caso do piloto. A persistência foi testada em 13/11/2026. Um relato novo foi criado pela API pública, o app foi parado e religado, e o relato continuou lá. Os 3 relatos sintéticos não foram recriados. Depois do teste, o gestor marcou o relato como <code>descartado</code>. Para escalar, migrar para um banco gerenciado (Azure SQL ou PostgreSQL Flexible Server).</li>
   <li><strong>Backup do banco:</strong> o F1 não oferece backup do App Service. Próximo passo: cópia periódica do arquivo SQLite com retenção, ou um banco gerenciado com backup automático.</li>
   <li><strong>Limites do F1:</strong> 60 min de CPU por dia e sem <em>Always On</em>. A primeira requisição depois de um período ocioso é lenta (partida a frio), e se a cota acabar o site para até o dia seguinte. O alerta <code>CaminhoLivreFora</code> cobre esse caso.</li>
   <li><strong>Monitoramento local:</strong> só alerta enquanto a máquina da equipe está ligada. Próximo passo: Application Insights / Azure Monitor ou Grafana Cloud.</li>
@@ -316,7 +325,7 @@ Success! 3 passed, 0 failed.</pre>
   <tr><td>Dockerfile enxuto, não-root, sem segredo e docker compose</td><td>2,0</td><td>Seção 3.1, Fig. 1, <code>app/Dockerfile</code>, <code>docker-compose.yml</code></td></tr>
   <tr><td>Terraform, state/.tfvars fora do repo, admin nunca 0.0.0.0/0</td><td>3,0</td><td>Seção 3.2, <code>terraform test</code>, Figs. 2–4, <code>.gitignore</code></td></tr>
   <tr><td>Actions: build, Gitleaks, Semgrep, Trivy por push; Secrets; deploy automático; barrada e corrigida</td><td>4,0</td><td>Seção 4, Figs. 5–9</td></tr>
-  <tr><td>Dashboard com os 4 sinais de ouro e um alerta disparado</td><td>3,0</td><td>Seção 5, Figs. 10–11</td></tr>
+  <tr><td>Dashboard com os 4 sinais de ouro e um alerta disparado</td><td>3,0</td><td>Seção 5, Figs. 10–12</td></tr>
   <tr><td>Arquitetura, responsabilidade compartilhada, LGPD, custo, README</td><td>2,0</td><td>Seções 2, 7, 8 e 9; README com Ficha Técnica</td></tr>
 </table>
 
