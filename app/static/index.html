@@ -39,6 +39,25 @@
       <p id="msg" role="status" aria-live="polite"></p>
     </form>
   </section>
+  <section aria-labelledby="t-painel" class="larga">
+    <h2 id="t-painel">Situação por quadra</h2>
+    <p id="painel-resumo" role="status">Carregando a situação das quadras…</p>
+    <label class="linha"><input type="checkbox" id="ver-painel" checked> Mostrar as quadras no mapa</label>
+    <ul class="legenda" aria-label="Legenda das quadras">
+      <li><span class="cor alta"></span>Atenção alta: 2 ou mais relatos abertos, ou relato aberto sem rebaixamento mapeado</li>
+      <li><span class="cor media"></span>Atenção média: 1 relato aberto, ou travessia sem rebaixamento mapeado</li>
+      <li><span class="cor baixa"></span>Atenção baixa: travessia com rebaixamento mapeado e sem relato aberto</li>
+    </ul>
+    <table id="painel-tabela" hidden>
+      <caption>Quadras que pedem mais atenção</caption>
+      <thead><tr><th scope="col">Quadra</th><th scope="col">Atenção</th><th scope="col">Travessias</th>
+        <th scope="col">Rebaixamentos mapeados</th><th scope="col">Piso tátil</th><th scope="col">Relatos abertos</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="meta">Calculado pelo pipeline de dados do Caminho Livre (camada Ouro) com OpenStreetMap, relatos e Open-Meteo.
+      Dados de <span id="painel-data">—</span>. "Sem rebaixamento mapeado" quer dizer que a informação não está no
+      OpenStreetMap: a rampa pode existir. A prioridade é uma sugestão; quem decide é o gestor, depois de verificar no local.</p>
+  </section>
   <section aria-labelledby="t-lista">
     <h2 id="t-lista">Relatos</h2>
     <details>
@@ -49,7 +68,7 @@
     <ul id="lista"></ul>
   </section>
 </main>
-<footer>Mapa © <a href="https://www.openstreetmap.org/copyright">colaboradores do OpenStreetMap</a> (ODbL) · mapa base: <a href="https://www.hotosm.org/">HOT</a> / <a href="https://openstreetmap.fr/">OSM France</a>.</footer>
+<footer>Mapa © <a href="https://www.openstreetmap.org/copyright">colaboradores do OpenStreetMap</a> (ODbL) · clima: <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0) · mapa base: <a href="https://www.hotosm.org/">HOT</a> / <a href="https://openstreetmap.fr/">OSM France</a>.</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="app.js"></script>

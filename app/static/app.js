@@ -2,7 +2,48 @@ const ROTULOS = { calcada_obstruida: "Calçada obstruída", rampa_bloqueada: "Ra
 const CORES = { pendente: "#d9480f", em_analise: "#f59f00", resolvido: "#2b8a3e", descartado: "#868e96" };
 const STATUS = Object.keys(CORES);
 const $ = (id) => document.getElementById(id);
-let ponto = null, marcador = null, camada = null, mapa = null;
+let ponto = null, marcador = null, camada = null, mapa = null, camadaPainel = null;
+// traço diferente por nível, além da cor
+const NIVEIS = {
+  alta: { rotulo: "Atenção alta", cor: "#c92a2a", traco: null },
+  media: { rotulo: "Atenção média", cor: "#b35c00", traco: "6 4" },
+  baixa: { rotulo: "Atenção baixa", cor: "#2b8a3e", traco: "2 4" },
+};
+
+function descreverQuadra(c) {
+  const demo = c.relatos_abertos_demonstracao ? ` (${c.relatos_abertos_demonstracao} de demonstração)` : "";
+  return `Quadra ${c.id_celula} — ${NIVEIS[c.nivel_atencao].rotulo}: ${c.travessias} travessia(s), `
+    + `${c.pontos_rebaixados} rebaixamento(s) mapeado(s), ${c.pontos_piso_tatil} ponto(s) com piso tátil, `
+    + `${c.relatos_abertos} relato(s) aberto(s)${demo}.`;
+}
+
+async function carregarPainel() {
+  const painel = await (await fetch("api/painel")).json();
+  const quadras = painel.celulas.filter((c) => NIVEIS[c.nivel_atencao]);
+  if (!quadras.length) { $("painel-resumo").textContent = "A situação por quadra ainda não foi publicada."; return; }
+  const conta = (nivel) => quadras.filter((c) => c.nivel_atencao === nivel).length;
+  $("painel-resumo").textContent = `${quadras.length} quadras avaliadas: ${conta("alta")} com atenção alta, `
+    + `${conta("media")} com atenção média e ${conta("baixa")} com atenção baixa.`;
+  $("painel-data").textContent = new Date(`${painel.data_referencia}T12:00:00`).toLocaleDateString("pt-BR");
+  quadras.forEach((c) => {
+    const n = NIVEIS[c.nivel_atencao];
+    L.rectangle([[c.lat_min, c.lon_min], [c.lat_max, c.lon_max]],
+      { color: n.cor, weight: 2, dashArray: n.traco, fillOpacity: c.nivel_atencao === "baixa" ? 0.08 : 0.25 })
+      .bindTooltip(descreverQuadra(c), { sticky: true }).addTo(camadaPainel);
+  });
+  const ordem = { alta: 0, media: 1, baixa: 2 };
+  const linhas = quadras.filter((c) => c.nivel_atencao !== "baixa")
+    .sort((a, b) => ordem[a.nivel_atencao] - ordem[b.nivel_atencao] || b.relatos_abertos - a.relatos_abertos || b.travessias - a.travessias)
+    .slice(0, 10)
+    .map((c) => {
+      const tr = document.createElement("tr");
+      [c.id_celula, NIVEIS[c.nivel_atencao].rotulo, c.travessias, c.pontos_rebaixados, c.pontos_piso_tatil, c.relatos_abertos]
+        .forEach((valor) => { tr.insertCell().textContent = valor; });
+      return tr;
+    });
+  $("painel-tabela").tBodies[0].replaceChildren(...linhas);
+  $("painel-tabela").hidden = !linhas.length;
+}
 
 function escolher(lat, lon) {
   ponto = { latitude: lat, longitude: lon };
@@ -75,7 +116,10 @@ $("token").onchange = carregar;
   L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
     maxZoom: 19, attribution: "© OpenStreetMap · estilo HOT, servidor OSM France" }).addTo(mapa);
   L.rectangle([[minLat, minLon], [maxLat, maxLon]], { color: "#0b5cad", fill: false, dashArray: "4" }).addTo(mapa);
+  camadaPainel = L.layerGroup().addTo(mapa);
   camada = L.layerGroup().addTo(mapa);
+  $("ver-painel").onchange = (e) => (e.target.checked ? camadaPainel.addTo(mapa) : camadaPainel.remove());
+  carregarPainel().catch(() => { $("painel-resumo").textContent = "Não foi possível carregar a situação por quadra."; });
   mapa.on("click", (e) => escolher(e.latlng.lat, e.latlng.lng));
   carregar();
 })();

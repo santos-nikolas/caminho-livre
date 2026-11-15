@@ -1,5 +1,6 @@
 """Caminho Livre - API do MVP (relatos de barreiras de acessibilidade)."""
 import hmac
+import json
 import os
 import re
 import sqlite3
@@ -21,6 +22,8 @@ APP_VERSION = os.getenv("APP_VERSION", "dev")
 SEED_DEMO = os.getenv("SEED_DEMO", "true").lower() == "true"
 # Territorio do piloto: entorno do campus FIAP Paulista (min_lat,min_lon,max_lat,max_lon)
 BBOX = [float(v) for v in os.getenv("PILOT_BBOX", "-23.5700,-46.6600,-23.5590,-46.6450").split(",")]
+# exportado de workspace.caminho_livre.ouro_painel_celula
+PAINEL_PATH = os.getenv("PAINEL_PATH", os.path.join(os.path.dirname(__file__), "dados", "ouro_painel_celula.json"))
 
 
 class Categoria(str, Enum):
@@ -176,6 +179,22 @@ def metrics():
 @app.get("/api/config")
 def config():
     return {"bbox": BBOX, "version": APP_VERSION}
+
+
+def carregar_painel() -> dict:
+    try:
+        with open(PAINEL_PATH, encoding="utf-8") as arquivo:
+            return json.load(arquivo)
+    except (OSError, ValueError):
+        return {"tabela_origem": "workspace.caminho_livre.ouro_painel_celula", "data_referencia": None, "celulas": []}
+
+
+PAINEL = carregar_painel()
+
+
+@app.get("/api/painel")
+def painel():
+    return PAINEL
 
 
 @app.get("/api/reports")

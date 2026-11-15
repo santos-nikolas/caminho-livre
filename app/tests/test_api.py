@@ -61,3 +61,14 @@ def test_cabecalhos_de_seguranca():
 def test_sanitizar():
     assert sanitizar("mail a@b.com cpf 123.456.789-00") == "mail [removido] cpf [removido]"
     assert sanitizar("   ") is None
+
+
+def test_painel_da_camada_ouro():
+    with TestClient(app) as c:
+        corpo = c.get("/api/painel").json()
+        assert corpo["tabela_origem"] == "workspace.caminho_livre.ouro_painel_celula"
+        for celula in corpo["celulas"]:
+            assert celula["nivel_atencao"] in ("alta", "media", "baixa", "sem_travessia")
+            assert celula["lat_min"] < celula["lat_max"] and celula["lon_min"] < celula["lon_max"]
+            # LGPD: o painel e agregado por quadricula, sem relato individual
+            assert not {"id", "id_relato", "latitude", "longitude", "descricao_sanitizada"} & celula.keys()

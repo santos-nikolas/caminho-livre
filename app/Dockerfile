@@ -16,6 +16,7 @@ COPY --from=build /install /usr/local
 WORKDIR /app
 COPY main.py ./
 COPY static ./static
+COPY dados ./dados
 USER 10001
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

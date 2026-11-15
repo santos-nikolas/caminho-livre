@@ -15,3 +15,11 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-
 #lista li { border-bottom: 1px solid #ddd; padding: 8px 0; }
 .meta, footer { color: var(--muted); font-size: 14px; }
 .tag { display: inline-block; padding: 0 6px; border-radius: 4px; background: #e8eef7; margin-right: 4px; }
+.larga { grid-column: 1 / -1; }
+.linha { font-weight: 400; } .linha input { width: auto; margin-right: 6px; }
+.legenda { list-style: none; padding: 0; font-size: 14px; }
+.cor { display: inline-block; width: 14px; height: 14px; margin-right: 6px; border: 2px solid; vertical-align: -2px; }
+.cor.alta { border-color: #c92a2a; background: #c92a2a55; } .cor.media { border-color: #b35c00; background: #e6770055; border-style: dashed; }
+.cor.baixa { border-color: #2b8a3e; background: #2b8a3e33; border-style: dotted; }
+table { border-collapse: collapse; width: 100%; } caption { text-align: left; font-weight: 600; padding: 4px 0; }
+th, td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left; }
